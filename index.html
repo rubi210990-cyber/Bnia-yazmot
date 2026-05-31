@@ -113,7 +113,10 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bot
     <div class="navbtn" data-view="route"><span class="ic">🗺️</span> מסלול עבודה</div>
     <div class="navbtn" data-view="reports"><span class="ic">📈</span> דוחות ורווחיות</div>
     <div class="navbtn" data-view="history"><span class="ic">🕘</span> היסטוריית פעולות</div>
-    <div class="foot"><span class="dot" id="syncDot"></span><span id="syncTxt">מצב מקומי</span></div>
+    <div class="foot">
+      <span><span class="dot" id="syncDot"></span><span id="syncTxt">מצב מקומי</span></span>
+      <div id="whoami" style="margin-top:8px;font-size:11px;color:var(--muted)"></div>
+    </div>
   </aside>
 
   <main class="main">
@@ -256,6 +259,8 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bot
 </div></div>
 
 <div class="toast" id="toast"></div>
+
+<button id="logoutBtn" onclick="logout()" style="position:fixed;top:14px;left:14px;z-index:80;background:rgba(244,63,94,.15);color:var(--danger);border:1px solid rgba(244,63,94,.3);border-radius:10px;padding:8px 14px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;backdrop-filter:blur(6px);display:none">⎋ התנתק</button>
 
 <div id="lockScreen" style="position:fixed;inset:0;z-index:9999;background:radial-gradient(900px 500px at 50% 0%,rgba(14,165,233,.15),transparent),#0a0e1a;display:none;place-items:center;padding:20px">
   <div style="text-align:center;max-width:340px;width:100%">
@@ -673,7 +678,7 @@ function exportExcel(){
 const ACCESS_CODES = { '1990':'ישי', '2024':'מזכירה' };
 function checkLock(){
   const unlocked=sessionStorage.getItem('cp_user');
-  if(unlocked){currentUser=unlocked;return}
+  if(unlocked){currentUser=unlocked;showWhoami();document.getElementById('logoutBtn').style.display='block';return}
   document.getElementById('lockScreen').style.display='grid';
 }
 function tryUnlock(){
@@ -682,11 +687,27 @@ function tryUnlock(){
     currentUser=ACCESS_CODES[pin];
     sessionStorage.setItem('cp_user',currentUser);
     document.getElementById('lockScreen').style.display='none';
+    document.getElementById('logoutBtn').style.display='block';
+    showWhoami();
     logAction('התחבר למערכת');save();
   } else {
     document.getElementById('pinErr').style.display='block';
     document.getElementById('pinInput').value='';
   }
+}
+function logout(){
+  if(!confirm('להתנתק מהמערכת?'))return;
+  logAction('התנתק');save();
+  sessionStorage.removeItem('cp_user');
+  currentUser=null;
+  document.getElementById('pinInput').value='';
+  document.getElementById('pinErr').style.display='none';
+  document.getElementById('logoutBtn').style.display='none';
+  document.getElementById('lockScreen').style.display='grid';
+}
+function showWhoami(){
+  const el=document.getElementById('whoami');
+  if(el)el.textContent=currentUser?('מחובר: '+currentUser):'';
 }
 
 function notifyStore(oid){
