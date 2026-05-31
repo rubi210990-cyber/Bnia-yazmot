@@ -284,11 +284,23 @@ const firebaseConfig = {
 
 window.FB = { config: firebaseConfig, ready: false };
 
+// פרטי ההתחברות למערכת
+const FB_EMAIL = "Cashphone21@gmail.com";
+const FB_PASSWORD = "220892!";
+
 if (firebaseConfig.apiKey) {
   try {
     const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
     const { getFirestore, doc, setDoc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const { getAuth, signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    // התחברות אוטומטית לפני גישה לנתונים
+    try {
+      await signInWithEmailAndPassword(auth, FB_EMAIL, FB_PASSWORD);
+    } catch(authErr) {
+      console.error("Auth failed", authErr);
+    }
     const db = getFirestore(app);
     const ref = doc(db, "cashphone", "data");
     window.FB.save = async (data) => { try { await setDoc(ref, { json: JSON.stringify(data), at: Date.now() }); } catch(e){ console.error(e); } };
