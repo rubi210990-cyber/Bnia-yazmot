@@ -113,6 +113,7 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bot
     <div class="navbtn" data-view="route"><span class="ic">🗺️</span> מסלול עבודה</div>
     <div class="navbtn" data-view="reports"><span class="ic">📈</span> דוחות ורווחיות</div>
     <div class="navbtn" data-view="history"><span class="ic">🕘</span> היסטוריית פעולות</div>
+    <div class="navbtn" data-view="users" style="display:none"><span class="ic">👥</span> ניהול משתמשים</div>
     <div class="foot">
       <span><span class="dot" id="syncDot"></span><span id="syncTxt">מצב מקומי</span></span>
       <div id="whoami" style="margin-top:8px;font-size:11px;color:var(--muted)"></div>
@@ -150,7 +151,7 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bot
 
     <section class="view" id="view-stores">
       <div class="head"><div><h1>חנויות</h1><p>לקוחות עסקיים · תשלום מראש או אשראי</p></div>
-        <div style="display:flex;gap:10px"><button class="btn ghost mobtog" onclick="tg()">☰</button><button class="btn primary" onclick="openStore()">+ חנות חדשה</button></div></div>
+        <div style="display:flex;gap:10px"><button class="btn ghost mobtog" onclick="tg()">☰</button><button class="btn ghost" onclick="clearDemoData()" style="color:var(--danger)">🗑️ נקה הכל</button><button class="btn primary" onclick="openStore()">+ חנות חדשה</button></div></div>
       <div class="panel"><div class="ph"><h3>רשימת חנויות</h3><div class="search"><span class="si">🔍</span><input id="stSearch" placeholder="חיפוש..." oninput="renderStores()"></div></div><div id="storesTable"></div></div>
     </section>
 
@@ -196,6 +197,12 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bot
       <div class="head"><div><h1>היסטוריית פעולות</h1><p>תיעוד כל הפעולות במערכת</p></div>
         <button class="btn ghost mobtog" onclick="tg()">☰</button></div>
       <div class="panel"><div class="ph"><h3>יומן פעילות</h3></div><div id="historyTable"></div></div>
+    </section>
+
+    <section class="view" id="view-users">
+      <div class="head"><div><h1>ניהול משתמשים</h1><p>הוספה ומחיקה של גישות למערכת · מנהל בלבד</p></div>
+        <div style="display:flex;gap:10px"><button class="btn ghost mobtog" onclick="tg()">☰</button><button class="btn primary" onclick="openUser()">+ משתמש חדש</button></div></div>
+      <div class="panel"><div class="ph"><h3>משתמשי המערכת</h3></div><div id="usersTable"></div></div>
     </section>
   </main>
 </div>
@@ -247,7 +254,11 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bot
     <div class="field"><label>יתרה / חוב התחלתי (₪)</label><input id="s_balance" type="number" value="0"></div>
   </div>
   <div class="field"><label>עיר</label><input id="s_city"></div>
-  <div class="field"><label>כתובת / מיקום (לניווט)</label><input id="s_addr" placeholder="רחוב ומספר, או 31.25,34.79"><small style="color:var(--muted);font-size:11px;display:block;margin-top:5px">כתובת מלאה או קואורדינטות מ-Google Maps</small></div>
+  <div class="field"><label>כתובת / מיקום (לניווט)</label>
+    <input id="s_addr" placeholder="רחוב ומספר, או 31.25,34.79">
+    <button type="button" class="btn ghost sm" onclick="grabStoreLocation()" style="margin-top:8px;width:100%;justify-content:center" id="grabLocBtn">📍 מצא את המיקום הנוכחי שלי</button>
+    <small style="color:var(--muted);font-size:11px;display:block;margin-top:5px">לחץ כשאתה ליד החנות, או הזן כתובת/קואורדינטות ידנית</small>
+  </div>
   <div class="modal-foot"><button class="btn ghost" onclick="closeModal('storeModal')">ביטול</button><button class="btn primary" onclick="saveStore()">שמירה</button></div>
 </div></div>
 
@@ -256,6 +267,14 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bot
   <div class="field"><label>סכום (₪)</label><input id="d_amount" type="number" placeholder="0"></div>
   <div class="field"><label>הערה</label><input id="d_note" placeholder="למשל: העברה בנקאית"></div>
   <div class="modal-foot"><button class="btn ghost" onclick="closeModal('depModal')">ביטול</button><button class="btn primary" onclick="saveDeposit()">אישור</button></div>
+</div></div>
+
+<div class="modal-bg" id="userModal"><div class="modal">
+  <h2>משתמש חדש</h2><p class="sub">הוסף גישה למערכת עם קוד אישי</p>
+  <div class="field"><label>שם</label><input id="u_name" placeholder="שם המשתמש"></div>
+  <div class="field"><label>קוד גישה (4-8 ספרות)</label><input id="u_code" type="number" placeholder="למשל 5555"></div>
+  <div class="field" style="display:flex;align-items:center;gap:10px"><input type="checkbox" id="u_admin" style="width:auto"><label style="margin:0">הרשאת מנהל (יכול לנהל משתמשים)</label></div>
+  <div class="modal-foot"><button class="btn ghost" onclick="closeModal('userModal')">ביטול</button><button class="btn primary" onclick="saveUser()">שמירה</button></div>
 </div></div>
 
 <div class="toast" id="toast"></div>
@@ -317,7 +336,8 @@ if (firebaseConfig.apiKey) {
 </script>
 
 <script>
-let DB={stores:[],orders:[],products:[],log:[],payments:[]};
+let DB={stores:[],orders:[],products:[],log:[],payments:[],users:[]};
+let currentIsAdmin=false;
 let editStoreId=null,depStoreId=null,editProdId=null,restockId=null,prodFilter='all';
 let fbSyncing=false, deferredPrompt=null, currentUser=null;
 
@@ -340,6 +360,7 @@ function load(){
   // load from local first for instant display
   try{const l=localStorage.getItem('cp_data');if(l){DB=JSON.parse(l)}}catch(e){}
   if(!DB.log)DB.log=[];if(!DB.payments)DB.payments=[];
+  if(!DB.users||!DB.users.length)DB.users=[{code:'1990',name:'ישי',admin:true},{code:'2024',name:'מזכירה',admin:false}];
   if(!DB.products.length&&!DB.stores.length)seed();
 }
 function logAction(txt){
@@ -356,7 +377,7 @@ function connectFirebase(){
   window.FB.listen((cloud)=>{
     fbSyncing=true;
     DB=cloud;
-    if(!DB.log)DB.log=[];if(!DB.payments)DB.payments=[];
+    if(!DB.log)DB.log=[];if(!DB.payments)DB.payments=[];if(!DB.users||!DB.users.length)DB.users=[{code:'1990',name:'ישי',admin:true},{code:'2024',name:'מזכירה',admin:false}];
     renderAll();
     fbSyncing=false;
     first=false;
@@ -385,7 +406,7 @@ function seed(){
   ];
 }
 
-document.querySelectorAll('.navbtn[data-view]').forEach(b=>{b.onclick=()=>{const v=b.dataset.view;document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.navbtn[data-view="'+v+'"]').forEach(x=>x.classList.add('on'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('view-'+v).classList.add('on');document.getElementById('side').classList.remove('on');document.getElementById('side').classList.remove('open');if(v==='route')buildRoute();if(v==='reports')renderReports();if(v==='history')renderHistory()}});
+document.querySelectorAll('.navbtn[data-view]').forEach(b=>{b.onclick=()=>{const v=b.dataset.view;document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.navbtn[data-view="'+v+'"]').forEach(x=>x.classList.add('on'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('view-'+v).classList.add('on');document.getElementById('side').classList.remove('on');document.getElementById('side').classList.remove('open');if(v==='route')buildRoute();if(v==='reports')renderReports();if(v==='history')renderHistory();if(v==='users')renderUsers()}});
 document.querySelectorAll('#prodFilter .pill').forEach(p=>{p.onclick=()=>{document.querySelectorAll('#prodFilter .pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');prodFilter=p.dataset.f;renderProducts()}});
 
 function renderAll(){renderDash();renderOrders();renderProducts();renderStores();renderDebts()}
@@ -455,7 +476,7 @@ function renderStores(){
   let rows=list.map(s=>{
     const typeTag=s.type==='credit'?'<span class="tag purple">אשראי</span>':'<span class="tag blue">תשלום מראש</span>';
     const bal=s.balance>=0?`<span class="tag green">${fmt(s.balance)}</span>`:`<span class="tag red">${fmt(s.balance)}</span>`;
-    return `<tr><td><b>${s.name}</b><br><small style="color:var(--muted)">${s.city||''}</small></td><td class="hide-m">${s.phone||'—'}</td><td>${typeTag}</td><td>${bal}</td><td><button class="btn sm ghost" onclick="openDeposit('${s.id}')">+ תשלום</button> <button class="btn sm ghost hide-m" onclick="openStore('${s.id}')">עריכה</button></td></tr>`;
+    return `<tr><td><b>${s.name}</b><br><small style="color:var(--muted)">${s.city||''}</small></td><td class="hide-m">${s.phone||'—'}</td><td>${typeTag}</td><td>${bal}</td><td><button class="btn sm ghost" onclick="openDeposit('${s.id}')">+ תשלום</button> <button class="btn sm ghost hide-m" onclick="openStore('${s.id}')">עריכה</button> <button class="btn sm danger" onclick="delStore('${s.id}')">מחיקה</button></td></tr>`;
   }).join('');
   document.getElementById('storesTable').innerHTML=`<table><thead><tr><th>חנות</th><th class="hide-m">טלפון</th><th>סוג</th><th>יתרה</th><th>פעולות</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
@@ -533,7 +554,25 @@ function saveProduct(){
   if(editProdId){Object.assign(prodById(editProdId),data);logAction('עדכן מוצר: '+name)}else{DB.products.push({id:id(),...data});logAction('הוסיף מוצר: '+name)}
   closeModal('productModal');save();toast('המוצר נשמר ✓');
 }
-function delProduct(pid){if(!confirm('למחוק מוצר?'))return;DB.products=DB.products.filter(p=>p.id!==pid);save();toast('נמחק')}
+function delProduct(pid){if(!confirm('למחוק מוצר?'))return;const p=prodById(pid);DB.products=DB.products.filter(x=>x.id!==pid);if(p)logAction('מחק מוצר: '+p.name);save();toast('נמחק')}
+function delStore(sid){
+  const s=storeById(sid);if(!s)return;
+  const relatedOrders=DB.orders.filter(o=>o.storeId===sid).length;
+  let msg='למחוק את החנות "'+s.name+'"?';
+  if(relatedOrders>0)msg+=`\n\n⚠️ לחנות יש ${relatedOrders} הזמנות. החנות תימחק אבל ההזמנות יישארו (ללא שיוך).`;
+  if(s.balance!==0)msg+=`\n\n⚠️ לחנות יש יתרה/חוב של ${fmt(s.balance)}.`;
+  if(!confirm(msg))return;
+  DB.stores=DB.stores.filter(x=>x.id!==sid);
+  logAction('מחק חנות: '+s.name);
+  save();toast('החנות נמחקה');
+}
+function clearDemoData(){
+  if(!confirm('⚠️ פעולה זו תמחק את כל הנתונים (חנויות, מוצרים, הזמנות, תשלומים) ותתחיל מאפס.\n\nלהמשיך?'))return;
+  if(!confirm('בטוח לגמרי? אי אפשר לבטל את הפעולה הזו!'))return;
+  DB.stores=[];DB.products=[];DB.orders=[];DB.payments=[];
+  logAction('איפס את כל הנתונים');
+  save();toast('כל הנתונים נמחקו — התחל נקי ✓');
+}
 function openRestock(pid){restockId=pid;const p=prodById(pid);document.getElementById('restockSub').textContent=`${p.name} · במלאי כעת ${p.stock} יח׳`;document.getElementById('r_qty').value='';show('restockModal')}
 function saveRestock(){const q=+document.getElementById('r_qty').value||0;if(q<=0){toast('יש להזין כמות');return}prodById(restockId).stock+=q;closeModal('restockModal');save();toast(`נוספו ${q} יח׳ ✓`)}
 
@@ -550,7 +589,27 @@ function saveStore(){
   closeModal('storeModal');save();toast('החנות נשמרה ✓');
 }
 function openDeposit(sid){depStoreId=sid;const s=storeById(sid);document.getElementById('depSub').textContent=`${s.name} · ${s.balance<0?'חוב '+fmt(Math.abs(s.balance)):'יתרה '+fmt(s.balance)}`;document.getElementById('d_amount').value='';document.getElementById('d_note').value='';show('depModal')}
-function saveDeposit(){const amt=+document.getElementById('d_amount').value||0;if(amt<=0){toast('יש להזין סכום');return}const s=storeById(depStoreId);s.balance+=amt;if(!DB.payments)DB.payments=[];DB.payments.unshift({id:id(),storeId:depStoreId,storeName:s.name,amount:amt,note:document.getElementById('d_note').value.trim(),date:Date.now()});logAction(`תשלום מ-${s.name}: ${fmt(amt)}`);closeModal('depModal');save();toast(`נרשמו ${fmt(amt)} ✓`)}
+function grabStoreLocation(){
+  const btn=document.getElementById('grabLocBtn');
+  if(!navigator.geolocation){toast('הדפדפן לא תומך באיתור מיקום');return}
+  btn.textContent='⏳ מאתר מיקום...';btn.disabled=true;
+  navigator.geolocation.getCurrentPosition(
+    p=>{
+      const lat=p.coords.latitude.toFixed(5);
+      const lng=p.coords.longitude.toFixed(5);
+      document.getElementById('s_addr').value=`${lat},${lng}`;
+      btn.textContent='✅ המיקום נתפס!';btn.disabled=false;
+      toast('המיקום נשמר בשדה ✓');
+      setTimeout(()=>{btn.textContent='📍 מצא את המיקום הנוכחי שלי'},2500);
+    },
+    e=>{
+      btn.textContent='📍 מצא את המיקום הנוכחי שלי';btn.disabled=false;
+      toast('לא ניתן לאתר מיקום. בדוק הרשאות מיקום בדפדפן');
+    },
+    {enableHighAccuracy:true,timeout:10000}
+  );
+}
+function saveDeposit(){const amt=+document.getElementById('d_amount').value||0;if(amt<=0){toast('יש להזין סכום');return}const s=storeById(depStoreId);if(!s){toast('שגיאה: החנות לא נמצאה');closeModal('depModal');return}s.balance+=amt;if(!DB.payments)DB.payments=[];DB.payments.unshift({id:id(),storeId:depStoreId,storeName:s.name,amount:amt,note:document.getElementById('d_note').value.trim(),date:Date.now()});logAction(`תשלום מ-${s.name}: ${fmt(amt)}`);closeModal('depModal');save();toast(`נרשמו ${fmt(amt)} ✓`)}
 
 function show(i){document.getElementById(i).classList.add('show')}
 
@@ -587,7 +646,8 @@ function buildRoute(){
   let rows=list.map((s,i)=>{
     const c=storeCoords(s);
     const destParam=encodeURIComponent(c?`${c.lat},${c.lng}`:s.addr);
-    const nav=`https://www.google.com/maps/dir/?api=1&destination=${destParam}`;
+    const navGoogle=`https://www.google.com/maps/dir/?api=1&destination=${destParam}`;
+    const navWaze=c?`https://waze.com/ul?ll=${c.lat},${c.lng}&navigate=yes`:`https://waze.com/ul?q=${encodeURIComponent(s.addr)}&navigate=yes`;
     const waMsg=encodeURIComponent(`שלום, מ-Cashphone. אני בדרך אליכם. מיקום: https://maps.google.com/?q=${destParam}`);
     const phone=(s.phone||'').replace(/[^0-9]/g,'').replace(/^0/,'972');
     const wa=phone?`https://wa.me/${phone}?text=${waMsg}`:null;
@@ -597,8 +657,9 @@ function buildRoute(){
       <td><b>${s.name}</b><br><small style="color:var(--muted)">${s.addr}</small></td>
       <td>${balTag}</td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
-        <a href="${nav}" target="_blank" class="btn sm primary" style="text-decoration:none">🧭 ניווט</a>
-        ${wa?`<a href="${wa}" target="_blank" class="btn sm ghost" style="text-decoration:none">📲 שלח מיקום</a>`:''}
+        <a href="${navWaze}" target="_blank" class="btn sm primary" style="text-decoration:none;background:linear-gradient(135deg,#33ccff,#0a8ed9);color:#fff">Waze</a>
+        <a href="${navGoogle}" target="_blank" class="btn sm ghost" style="text-decoration:none">Maps</a>
+        ${wa?`<a href="${wa}" target="_blank" class="btn sm ghost" style="text-decoration:none">📲</a>`:''}
       </td></tr>`;
   }).join('');
   document.getElementById('routeTable').innerHTML=`<table><tbody>${rows}</tbody></table>`;
@@ -608,13 +669,22 @@ function buildRoute(){
 function openFullRoute(){
   const stops=window._routeStops||[];
   if(!stops.length)return;
-  let origin=myLoc&&myLoc.lat?`${myLoc.lat},${myLoc.lng}`:(myLoc&&myLoc.addr?myLoc.addr:'');
-  const dest=stops[stops.length-1];
-  const waypoints=stops.slice(0,-1).map(encodeURIComponent).join('|');
-  let url=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`;
-  if(origin)url+=`&origin=${encodeURIComponent(origin)}`;
-  if(waypoints)url+=`&waypoints=${waypoints}`;
-  window.open(url,'_blank');
+  const choice=confirm('לחץ "אישור" לניווט ב-Google Maps (כל העצירות במסלול אחד),\nאו "ביטול" לניווט ב-Waze (עצירה ראשונה).');
+  if(choice){
+    let origin=myLoc&&myLoc.lat?`${myLoc.lat},${myLoc.lng}`:(myLoc&&myLoc.addr?myLoc.addr:'');
+    const dest=stops[stops.length-1];
+    const waypoints=stops.slice(0,-1).map(encodeURIComponent).join('|');
+    let url=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`;
+    if(origin)url+=`&origin=${encodeURIComponent(origin)}`;
+    if(waypoints)url+=`&waypoints=${waypoints}`;
+    window.open(url,'_blank');
+  } else {
+    // Waze supports one destination at a time
+    const first=stops[0];
+    const c=parseCoords(first);
+    const url=c?`https://waze.com/ul?ll=${c.lat},${c.lng}&navigate=yes`:`https://waze.com/ul?q=${encodeURIComponent(first)}&navigate=yes`;
+    window.open(url,'_blank');
+  }
 }
 
 /* ===== REPORTS ===== */
@@ -674,21 +744,22 @@ function exportExcel(){
 }
 
 /* ===== LOCK / SIMPLE AUTH ===== */
-// קודי גישה — אפשר לשנות אותם כאן
-const ACCESS_CODES = { '1990':'ישי', '2024':'מזכירה' };
+function findUser(code){return (DB.users||[]).find(u=>u.code===code)}
 function checkLock(){
   const unlocked=sessionStorage.getItem('cp_user');
-  if(unlocked){currentUser=unlocked;showWhoami();document.getElementById('logoutBtn').style.display='block';return}
+  if(unlocked){currentUser=unlocked;const u=findUser(sessionStorage.getItem('cp_code'));currentIsAdmin=u?!!u.admin:false;showWhoami();updateAdminUI();document.getElementById('logoutBtn').style.display='block';return}
   document.getElementById('lockScreen').style.display='grid';
 }
 function tryUnlock(){
   const pin=document.getElementById('pinInput').value.trim();
-  if(ACCESS_CODES[pin]){
-    currentUser=ACCESS_CODES[pin];
-    sessionStorage.setItem('cp_user',currentUser);
+  const u=findUser(pin);
+  if(u){
+    currentUser=u.name;currentIsAdmin=!!u.admin;
+    sessionStorage.setItem('cp_user',u.name);
+    sessionStorage.setItem('cp_code',u.code);
     document.getElementById('lockScreen').style.display='none';
     document.getElementById('logoutBtn').style.display='block';
-    showWhoami();
+    showWhoami();updateAdminUI();
     logAction('התחבר למערכת');save();
   } else {
     document.getElementById('pinErr').style.display='block';
@@ -698,8 +769,8 @@ function tryUnlock(){
 function logout(){
   if(!confirm('להתנתק מהמערכת?'))return;
   logAction('התנתק');save();
-  sessionStorage.removeItem('cp_user');
-  currentUser=null;
+  sessionStorage.removeItem('cp_user');sessionStorage.removeItem('cp_code');
+  currentUser=null;currentIsAdmin=false;
   document.getElementById('pinInput').value='';
   document.getElementById('pinErr').style.display='none';
   document.getElementById('logoutBtn').style.display='none';
@@ -707,7 +778,45 @@ function logout(){
 }
 function showWhoami(){
   const el=document.getElementById('whoami');
-  if(el)el.textContent=currentUser?('מחובר: '+currentUser):'';
+  if(el)el.textContent=currentUser?('מחובר: '+currentUser+(currentIsAdmin?' (מנהל)':'')):'';
+}
+function updateAdminUI(){
+  document.querySelectorAll('.navbtn[data-view="users"]').forEach(b=>b.style.display=currentIsAdmin?'flex':'none');
+}
+
+/* ===== USER MANAGEMENT (admin only) ===== */
+function renderUsers(){
+  if(!currentIsAdmin){document.getElementById('usersTable').innerHTML=emptyMsg('🔒','רק מנהל יכול לנהל משתמשים');return}
+  const rows=(DB.users||[]).map(u=>{
+    const roleTag=u.admin?'<span class="tag purple">מנהל</span>':'<span class="tag blue">עובד</span>';
+    const canDelete=(DB.users.filter(x=>x.admin).length>1)||!u.admin; // אל תמחק את המנהל האחרון
+    return `<tr><td><b>${u.name}</b></td><td><span class="tag green">קוד: ${u.code}</span></td><td>${roleTag}</td><td>${canDelete?`<button class="btn sm danger" onclick="delUser('${u.code}')">מחיקה</button>`:'<small style="color:var(--muted)">מנהל אחרון</small>'}</td></tr>`;
+  }).join('');
+  document.getElementById('usersTable').innerHTML=`<table><thead><tr><th>שם</th><th>קוד גישה</th><th>הרשאה</th><th>פעולות</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function openUser(){
+  if(!currentIsAdmin){toast('רק מנהל יכול להוסיף משתמשים');return}
+  document.getElementById('u_name').value='';document.getElementById('u_code').value='';document.getElementById('u_admin').checked=false;
+  show('userModal');
+}
+function saveUser(){
+  const name=document.getElementById('u_name').value.trim();
+  const code=document.getElementById('u_code').value.trim();
+  if(!name){toast('יש למלא שם');return}
+  if(!/^\d{4,8}$/.test(code)){toast('הקוד חייב להיות 4-8 ספרות');return}
+  if(findUser(code)){toast('הקוד הזה כבר תפוס, בחר אחר');return}
+  DB.users.push({name,code,admin:document.getElementById('u_admin').checked});
+  logAction('הוסיף משתמש: '+name);
+  closeModal('userModal');save();renderUsers();toast('המשתמש נוסף ✓');
+}
+function delUser(code){
+  const u=findUser(code);if(!u)return;
+  if(u.admin&&DB.users.filter(x=>x.admin).length<=1){toast('לא ניתן למחוק את המנהל האחרון');return}
+  if(code===sessionStorage.getItem('cp_code')){toast('אי אפשר למחוק את המשתמש שאיתו אתה מחובר');return}
+  if(!confirm('למחוק את המשתמש "'+u.name+'"?'))return;
+  DB.users=DB.users.filter(x=>x.code!==code);
+  logAction('מחק משתמש: '+u.name);
+  save();renderUsers();toast('המשתמש נמחק');
 }
 
 function notifyStore(oid){
