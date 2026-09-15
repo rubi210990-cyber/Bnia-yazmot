@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0e1a">
+<title>מערכת ניהול · Cashphone + בנייה יזמות</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0e1a;--bg2:#10162b;--panel:#151c33;--panel2:#1c2540;--line:#26304f;
+  --txt:#e8ecf7;--muted:#8a96b8;--accent:#00e5a0;--accent2:#0ea5e9;
+  --warn:#fbbf24;--danger:#f43f5e;--purple:#a78bfa;
+  --shadow:0 10px 40px rgba(0,0,0,.45);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Heebo',sans-serif;background:radial-gradient(1200px 600px at 80% -10%,rgba(14,165,233,.12),transparent),radial-gradient(900px 500px at 10% 110%,rgba(0,229,160,.10),transparent),var(--bg);color:var(--txt);min-height:100vh;-webkit-font-smoothing:antialiased}
+.app{display:flex;min-height:100vh}
+.side{width:248px;background:linear-gradient(180deg,var(--bg2),var(--panel));border-left:1px solid var(--line);padding:22px 16px;display:flex;flex-direction:column;gap:5px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 18px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.brand .logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:900;color:#06121f;font-size:18px}
+.brand b{font-size:18px;font-weight:800;letter-spacing:-.5px}
+.brand small{display:block;color:var(--muted);font-size:11px;font-weight:500}
+.navbtn{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:11px;color:var(--muted);font-weight:600;font-size:15px;cursor:pointer;border:1px solid transparent;transition:.18s}
+.navbtn:hover{background:var(--panel2);color:var(--txt)}
+.navbtn.on{background:linear-gradient(135deg,rgba(0,229,160,.16),rgba(14,165,233,.12));color:var(--txt);border-color:var(--line)}
+.navbtn .ic{font-size:18px;width:22px;text-align:center}
+.side .foot{margin-top:auto;font-size:11px;color:var(--muted);padding:10px 8px;border-top:1px solid var(--line)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warn);margin-left:6px}
+.dot.live{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+.main{flex:1;padding:26px 30px;overflow-x:hidden}
+.head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.head h1{font-size:25px;font-weight:800;letter-spacing:-.6px}
+.head p{color:var(--muted);font-size:14px;margin-top:2px}
+.btn{border:none;border-radius:11px;padding:11px 18px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;transition:.16s;display:inline-flex;align-items:center;gap:7px}
+.btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#06121f}
+.btn.primary:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(0,229,160,.3)}
+.btn.ghost{background:var(--panel);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--panel2)}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:9px}
+.btn.danger{background:rgba(244,63,94,.15);color:var(--danger);border:1px solid rgba(244,63,94,.3)}
+.grid{display:grid;gap:16px}
+.stats{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:22px}
+.card{background:linear-gradient(160deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
+.stat .lbl{color:var(--muted);font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px}
+.stat .num{font-size:28px;font-weight:800;margin-top:8px;letter-spacing:-1px}
+.stat .num.green{color:var(--accent)}.stat .num.red{color:var(--danger)}.stat .num.amber{color:var(--warn)}.stat .num.purple{color:var(--purple)}
+.stat .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.panel{background:linear-gradient(160deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+.panel .ph{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap;gap:10px}
+.panel .ph h3{font-size:17px;font-weight:700}
+table{width:100%;border-collapse:collapse}
+th{text-align:right;padding:12px 18px;font-size:12px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);text-transform:uppercase;letter-spacing:.5px}
+td{padding:13px 18px;font-size:14px;border-bottom:1px solid rgba(38,48,79,.5)}
+tr:last-child td{border-bottom:none}
+tbody tr{transition:.12s}tbody tr:hover{background:rgba(28,37,64,.5)}
+.tag{display:inline-block;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:700}
+.tag.green{background:rgba(0,229,160,.15);color:var(--accent)}
+.tag.amber{background:rgba(251,191,36,.15);color:var(--warn)}
+.tag.red{background:rgba(244,63,94,.15);color:var(--danger)}
+.tag.blue{background:rgba(14,165,233,.15);color:var(--accent2)}
+.tag.purple{background:rgba(167,139,250,.15);color:var(--purple)}
+.money{font-weight:700;font-variant-numeric:tabular-nums}
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty .big{font-size:42px;margin-bottom:10px;opacity:.5}
+input,select,textarea{font-family:inherit;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px 13px;font-size:14px;width:100%;outline:none;transition:.15s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(0,229,160,.12)}
+label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.field{margin-bottom:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-bg{position:fixed;inset:0;background:rgba(5,8,18,.75);backdrop-filter:blur(4px);display:none;place-items:center;z-index:100;padding:20px}
+.modal-bg.show{display:grid}
+.modal{background:linear-gradient(160deg,var(--panel),var(--bg2));border:1px solid var(--line);border-radius:20px;padding:26px;width:100%;max-width:480px;box-shadow:var(--shadow);max-height:90vh;overflow-y:auto}
+.modal h2{font-size:21px;font-weight:800;margin-bottom:4px}
+.modal .sub{color:var(--muted);font-size:14px;margin-bottom:20px}
+.modal-foot{display:flex;gap:10px;margin-top:8px}
+.modal-foot .btn{flex:1;justify-content:center}
+.search{position:relative;max-width:280px}
+.search input{padding-right:38px}
+.search .si{position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--panel2);border:1px solid var(--accent);color:var(--txt);padding:13px 22px;border-radius:12px;font-weight:600;box-shadow:var(--shadow);opacity:0;transition:.3s;z-index:200}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.view{display:none}.view.on{display:block;animation:fade .25s}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.pills{display:flex;gap:8px;flex-wrap:wrap}
+.pill{padding:7px 14px;border-radius:20px;background:var(--panel);border:1px solid var(--line);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;transition:.15s}
+.pill.on{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#06121f;border-color:transparent}
+.biztag{font-size:11px;padding:2px 8px;border-radius:6px;font-weight:700;margin-left:6px}
+.biztag.cash{background:rgba(0,229,160,.15);color:var(--accent)}
+.biztag.bnaya{background:rgba(167,139,250,.15);color:var(--purple)}
+.mobtog{display:none}
+.installbar{display:none;align-items:center;gap:10px;background:linear-gradient(135deg,rgba(0,229,160,.12),rgba(14,165,233,.1));border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin-bottom:18px}
+.installbar.show{display:flex}
+@media(max-width:860px){
+  .side{position:fixed;right:-260px;z-index:90;transition:.25s}.side.open{right:0}
+  .mobtog{display:inline-flex}.main{padding:18px}.row2{grid-template-columns:1fr}
+  table{font-size:13px}th,td{padding:10px 12px}.hide-m{display:none}
+}
+.docsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.doccard{background:var(--panel2);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer}
+.docimg{position:relative;aspect-ratio:3/4;background:#0b1020}
+.docimg img{width:100%;height:100%;object-fit:cover}
+.sigbadge{position:absolute;top:6px;left:6px;background:var(--accent);color:#04110b;font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px}
+.docmeta{padding:8px}.docmeta .t{font-size:13px;font-weight:600;line-height:1.3}.docmeta .s{font-size:11px;color:var(--muted);margin-top:2px}
+.scanrow{display:grid;grid-template-columns:26px 1fr 66px 66px;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px}
+.scanrow.off{opacity:.4}
+.scanrow .in{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:7px;color:var(--txt);font-size:14px;width:100%;font-family:inherit}
+.scanrow .in.num{text-align:center}
+.scanrow input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+#sigCanvas{width:100%;height:180px;background:#f8fafc;border:2px dashed var(--line);border-radius:12px;touch-action:none;display:block}
+#printArea{display:none}
+@media print{
+  body > *{display:none !important}
+  #printArea{display:block !important;position:relative;width:100%}
+  #printArea img#prImg{width:100%;display:block}
+  #printArea img#prSig{position:absolute;bottom:6%;left:4%;width:28%}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side" id="side">
+    <div class="brand"><div class="logo">C</div><div><b>מערכת ניהול</b><small>Cashphone · בנייה יזמות</small></div></div>
+    <div class="navbtn on" data-view="dash"><span class="ic">📊</span> סקירה</div>
+    <div class="navbtn" data-view="orders"><span class="ic">🧾</span> הזמנות</div>
+    <div class="navbtn" data-view="products"><span class="ic">📦</span> מוצרים ומלאי</div>
+    <div class="navbtn" data-view="docs"><span class="ic">🗂️</span> מסמכים וסריקה</div>
+    <div class="navbtn" data-view="stores"><span class="ic">🏪</span> חנויות</div>
+    <div class="navbtn" data-view="debts"><span class="ic">💰</span> יתרות וחובות</div>
+    <div class="navbtn" data-view="route"><span class="ic">🗺️</span> מסלול עבודה</div>
+    <div class="navbtn" data-view="reports"><span class="ic">📈</span> דוחות ורווחיות</div>
+    <div class="navbtn" data-view="history"><span class="ic">🕘</span> היסטוריית פעולות</div>
+    <div class="navbtn" data-view="users" style="display:none"><span class="ic">👥</span> ניהול משתמשים</div>
+    <div class="foot">
+      <span><span class="dot" id="syncDot"></span><span id="syncTxt">מצב מקומי</span></span>
+      <div id="whoami" style="margin-top:8px;font-size:11px;color:var(--muted)"></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="installbar" id="installBar">
+      <span style="font-size:20px">📱</span>
+      <div style="flex:1;font-size:14px;font-weight:600">התקן את המערכת כאפליקציה על המכשיר</div>
+      <button class="btn sm primary" onclick="installApp()">התקן</button>
+    </div>
+
+    <section class="view on" id="view-dash">
+      <div class="head"><div><h1>בוקר טוב, ישי 👋</h1><p>תמונת מצב של שני העסקים</p></div>
+        <button class="btn ghost mobtog" onclick="tg()">☰ תפריט</button></div>
+      <div class="grid stats" id="statCards"></div>
+      <div class="panel"><div class="ph"><h3>הזמנות אחרונות</h3><div class="navbtn" data-view="orders" style="padding:6px 12px;font-size:13px">הכל ←</div></div><div id="recentOrders"></div></div>
+      <div class="panel"><div class="ph"><h3>🧪 כלים ובדיקה</h3></div><div id="toolsBox"></div></div>
+    </section>
+
+    <section class="view" id="view-orders">
+      <div class="head"><div><h1>הזמנות</h1><p>ניהול הזמנות משני העסקים</p></div>
+        <div style="display:flex;gap:10px"><button class="btn ghost mobtog" onclick="tg()">☰</button><button class="btn primary" onclick="openOrder()">+ הזמנה חדשה</button></div></div>
+      <div class="panel"><div class="ph"><h3>כל ההזמנות</h3><div class="search"><span class="si">🔍</span><input id="ordSearch" placeholder="חיפוש..." oninput="renderOrders()"></div></div><div id="ordersTable"></div></div>
+    </section>
+
+    <section class="view" id="view-products">
+      <div class="head"><div><h1>מוצרים ומלאי</h1><p>דיגיטלי (Cashphone) ופיזי (בנייה יזמות)</p></div>
+        <div style="display:flex;gap:10px"><button class="btn ghost mobtog" onclick="tg()">☰</button><button class="btn primary" onclick="openProduct()">+ מוצר חדש</button></div></div>
+      <div style="margin-bottom:16px" class="pills" id="prodFilter">
+        <div class="pill on" data-f="all">הכל</div><div class="pill" data-f="cash">Cashphone (דיגיטלי)</div><div class="pill" data-f="bnaya">בנייה יזמות (פיזי)</div><div class="pill" data-f="low">מלאי נמוך ⚠️</div>
+      </div>
+      <div class="panel"><div class="ph"><h3>קטלוג מוצרים</h3></div><div id="productsTable"></div></div>
+    </section>
+
+    <section class="view" id="view-stores">
+      <div class="head"><div><h1>חנויות</h1><p>לקוחות עסקיים · תשלום מראש או אשראי</p></div>
+        <div style="display:flex;gap:10px"><button class="btn ghost mobtog" onclick="tg()">☰</button><button class="btn ghost" onclick="clearDemoData()" style="color:var(--danger)">🗑️ נקה הכל</button><button class="btn primary" onclick="openStore()">+ חנות חדשה</button></div></div>
+      <div class="panel"><div class="ph"><h3>רשימת חנויות</h3><div class="search"><span class="si">🔍</span><input id="stSearch" placeholder="חיפוש..." oninput="renderStores()"></div></div><div id="storesTable"></div></div>
+    </section>
+
+    <section class="view" id="view-debts">
+      <div class="head"><div><h1>יתרות וחובות</h1><p>מעקב כספי · תשלום מראש (יתרה) ואשראי (חוב)</p></div>
+        <button class="btn ghost mobtog" onclick="tg()">☰</button></div>
+      <div class="grid stats" id="debtStats"></div>
+      <div class="panel"><div class="ph"><h3>מצב כספי לפי חנות</h3></div><div id="debtsTable"></div></div>
+    </section>
+
+    <section class="view" id="view-route">
+      <div class="head"><div><h1>מסלול עבודה</h1><p>סבב חכם לפי קרבת החנויות אליך</p></div>
+        <button class="btn ghost mobtog" onclick="tg()">☰</button></div>
+      <div class="card" style="margin-bottom:18px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <button class="btn primary" onclick="locateMe()">📍 המיקום שלי</button>
+          <div class="pills" id="routeFilter" style="margin-right:auto">
+            <div class="pill on" data-rf="all">כל החנויות</div>
+            <div class="pill" data-rf="debt">רק חובות (גבייה)</div>
+          </div>
+        </div>
+        <div id="locStatus" style="margin-top:12px;font-size:13px;color:var(--muted)">לחץ "המיקום שלי" כדי לבנות מסלול לפי קרבה. אפשר גם להזין מיקום ידנית.</div>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <input id="manualLoc" placeholder="או הזן מיקום התחלה: כתובת / 31.25,34.79" style="flex:1;min-width:200px">
+          <button class="btn ghost" onclick="setManualLoc()">בנה מסלול</button>
+        </div>
+      </div>
+      <div class="panel"><div class="ph"><h3>סדר עצירות</h3><button class="btn sm primary" id="openAllBtn" onclick="openFullRoute()" style="display:none">🧭 נווט לכל המסלול</button></div><div id="routeTable"></div></div>
+    </section>
+
+    <section class="view" id="view-reports">
+      <div class="head"><div><h1>דוחות ורווחיות</h1><p>הכנסות, רווח, ומוצרים מובילים</p></div>
+        <div style="display:flex;gap:10px"><button class="btn ghost mobtog" onclick="tg()">☰</button><button class="btn primary" onclick="exportExcel()">⬇️ ייצוא לאקסל</button></div></div>
+      <div class="pills" id="repRange" style="margin-bottom:16px">
+        <div class="pill on" data-r="7">7 ימים</div><div class="pill" data-r="30">30 יום</div><div class="pill" data-r="90">90 יום</div><div class="pill" data-r="9999">הכל</div>
+      </div>
+      <div class="grid stats" id="repStats"></div>
+      <div class="panel" style="margin-bottom:18px"><div class="ph"><h3>🏆 מוצרים מובילים</h3></div><div id="topProducts"></div></div>
+      <div class="panel"><div class="ph"><h3>פירוט לפי עסק</h3></div><div id="bizBreak"></div></div>
+    </section>
+
+    <section class="view" id="view-history">
+      <div class="head"><div><h1>היסטוריית פעולות</h1><p>תיעוד כל הפעולות במערכת</p></div>
+        <button class="btn ghost mobtog" onclick="tg()">☰</button></div>
+      <div class="panel"><div class="ph"><h3>יומן פעילות</h3></div><div id="historyTable"></div></div>
+    </section>
+
+    <section class="view" id="view-docs">
+      <div class="head"><div><h1>מסמכים וסריקה</h1><p>צלם חשבונית → כניסה אוטומטית למלאי · שמירה · חתימה</p></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost mobtog" onclick="tg()">☰</button><button class="btn ghost" onclick="openAiKey()">⚙️ AI</button><button class="btn ghost" onclick="document.getElementById('docGal').click()">⬆️ העלה</button><button class="btn primary" onclick="document.getElementById('docCam').click()">📸 סרוק מסמך</button></div></div>
+      <div id="docFilterBar" style="display:none;align-items:center;justify-content:space-between;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px"></div>
+      <div id="scanStatus" class="card" style="display:none;margin-bottom:14px;text-align:center"></div>
+      <div class="panel"><div class="ph"><h3>מסמכים שמורים</h3></div><div id="docsGrid" class="docsgrid"></div></div>
+      <input id="docCam" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleScanFile(this.files[0],this)">
+      <input id="docGal" type="file" accept="image/*" style="display:none" onchange="handleScanFile(this.files[0],this)">
+    </section>
+
+    <section class="view" id="view-users">
+      <div class="head"><div><h1>ניהול משתמשים</h1><p>הוספה ומחיקה של גישות למערכת · מנהל בלבד</p></div>
+        <div style="display:flex;gap:10px"><button class="btn ghost mobtog" onclick="tg()">☰</button><button class="btn primary" onclick="openUser()">+ משתמש חדש</button></div></div>
+      <div class="panel"><div class="ph"><h3>משתמשי המערכת</h3></div><div id="usersTable"></div></div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-bg" id="orderModal"><div class="modal">
+  <h2>הזמנה חדשה</h2><p class="sub">בחרי מוצר וחנות. במלאי פיזי הכמות תרד אוטומטית.</p>
+  <div class="field"><label>חנות</label><select id="o_store"></select></div>
+  <div class="field"><label>מוצר</label><select id="o_product" onchange="onProdPick()"></select></div>
+  <div class="row2">
+    <div class="field"><label>כמות</label><input id="o_qty" type="number" value="1" min="1" oninput="calcTotal()"></div>
+    <div class="field"><label>מחיר ליחידה (₪)</label><input id="o_price" type="number" oninput="calcTotal()"></div>
+  </div>
+  <div class="field"><label>סה״כ</label><input id="o_total" readonly style="font-weight:800;color:var(--accent)"></div>
+  <div class="field"><label>סטטוס</label><select id="o_status"><option value="new">חדשה</option><option value="done">הושלמה</option></select></div>
+  <div class="modal-foot"><button class="btn ghost" onclick="closeModal('orderModal')">ביטול</button><button class="btn primary" onclick="saveOrder()">שמירה</button></div>
+</div></div>
+
+<div class="modal-bg" id="productModal"><div class="modal">
+  <h2 id="prodTitle">מוצר חדש</h2><p class="sub">דיגיטלי = ללא מלאי. פיזי = מעקב כמות.</p>
+  <div class="field"><label>שם המוצר</label><input id="p_name" placeholder="למשל: סוללת גיבוי 10000mAh"></div>
+  <div class="row2">
+    <div class="field"><label>עסק</label><select id="p_biz"><option value="cash">Cashphone (דיגיטלי)</option><option value="bnaya">בנייה יזמות (פיזי)</option></select></div>
+    <div class="field"><label>מחיר מכירה (₪)</label><input id="p_price" type="number" placeholder="0" oninput="calcMargin()"></div>
+  </div>
+  <div class="row2">
+    <div class="field"><label>מחיר עלות (₪)</label><input id="p_cost" type="number" placeholder="0" oninput="calcMargin()"></div>
+    <div class="field"><label>ספק</label><input id="p_supplier" placeholder="שם הספק"></div>
+  </div>
+  <div class="field" id="marginBox" style="background:rgba(0,229,160,.08);border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:13px;color:var(--accent);font-weight:600;display:none"></div>
+  <div class="row2" id="stockRow">
+    <div class="field"><label>כמות במלאי</label><input id="p_stock" type="number" value="0"></div>
+    <div class="field"><label>התראה כשמתחת ל-</label><input id="p_min" type="number" value="5"></div>
+  </div>
+  <div class="modal-foot"><button class="btn ghost" onclick="closeModal('productModal')">ביטול</button><button class="btn primary" onclick="saveProduct()">שמירה</button></div>
+</div></div>
+
+<div class="modal-bg" id="restockModal"><div class="modal">
+  <h2>הוספת מלאי</h2><p class="sub" id="restockSub"></p>
+  <div class="field"><label>כמה להוסיף</label><input id="r_qty" type="number" placeholder="0"></div>
+  <div class="modal-foot"><button class="btn ghost" onclick="closeModal('restockModal')">ביטול</button><button class="btn primary" onclick="saveRestock()">הוספה</button></div>
+</div></div>
+
+<div class="modal-bg" id="storeModal"><div class="modal">
+  <h2 id="storeModalTitle">חנות חדשה</h2><p class="sub">נדרש אישור עוסק/חברה.</p>
+  <div class="field"><label>שם החנות</label><input id="s_name" placeholder="שם העסק"></div>
+  <div class="row2"><div class="field"><label>טלפון</label><input id="s_phone" placeholder="05..."></div><div class="field"><label>ח.פ / עוסק</label><input id="s_tax"></div></div>
+  <div class="row2">
+    <div class="field"><label>סוג תשלום</label><select id="s_type"><option value="prepaid">תשלום מראש (יתרה)</option><option value="credit">אשראי (משלם אחרי מכירה)</option></select></div>
+    <div class="field"><label>יתרה / חוב התחלתי (₪)</label><input id="s_balance" type="number" value="0"></div>
+  </div>
+  <div class="field"><label>עיר</label><input id="s_city"></div>
+  <div class="field"><label>כתובת / מיקום (לניווט)</label>
+    <input id="s_addr" placeholder="רחוב ומספר, או 31.25,34.79">
+    <button type="button" class="btn ghost sm" onclick="grabStoreLocation()" style="margin-top:8px;width:100%;justify-content:center" id="grabLocBtn">📍 מצא את המיקום הנוכחי שלי</button>
+    <small style="color:var(--muted);font-size:11px;display:block;margin-top:5px">לחץ כשאתה ליד החנות, או הזן כתובת/קואורדינטות ידנית</small>
+  </div>
+  <div class="modal-foot"><button class="btn ghost" onclick="closeModal('storeModal')">ביטול</button><button class="btn primary" onclick="saveStore()">שמירה</button></div>
+</div></div>
+
+<div class="modal-bg" id="depModal"><div class="modal">
+  <h2>קבלת תשלום / הוספת יתרה</h2><p class="sub" id="depSub"></p>
+  <div class="field"><label>סכום (₪)</label><input id="d_amount" type="number" placeholder="0"></div>
+  <div class="field"><label>הערה</label><input id="d_note" placeholder="למשל: העברה בנקאית"></div>
+  <div class="modal-foot"><button class="btn ghost" onclick="closeModal('depModal')">ביטול</button><button class="btn primary" onclick="saveDeposit()">אישור</button></div>
+</div></div>
+
+<div class="modal-bg" id="userModal"><div class="modal">
+  <h2>משתמש חדש</h2><p class="sub">הוסף גישה למערכת עם קוד אישי</p>
+  <div class="field"><label>שם</label><input id="u_name" placeholder="שם המשתמש"></div>
+  <div class="field"><label>קוד גישה (4-8 ספרות)</label><input id="u_code" type="number" placeholder="למשל 5555"></div>
+  <div class="field" style="display:flex;align-items:center;gap:10px"><input type="checkbox" id="u_admin" style="width:auto"><label style="margin:0">הרשאת מנהל (יכול לנהל משתמשים)</label></div>
+  <div class="modal-foot"><button class="btn ghost" onclick="closeModal('userModal')">ביטול</button><button class="btn primary" onclick="saveUser()">שמירה</button></div>
+</div></div>
+
+<div class="modal-bg" id="scanModal"><div class="modal">
+  <h2>זוהו מוצרים מהמסמך</h2><p class="sub">בדוק, תקן וסמן מה להכניס למלאי (פיזי · בנייה יזמות).</p>
+  <div class="field"><label>ספק</label><input id="scanSupplier" placeholder="שם הספק"></div>
+  <div id="scanRows" style="max-height:44vh;overflow-y:auto;margin-bottom:12px"></div>
+  <div class="field" style="display:flex;align-items:center;gap:10px"><input type="checkbox" id="scanSaveDoc" checked style="width:auto"><label style="margin:0">שמור גם את תמונת המסמך</label></div>
+  <div class="modal-foot"><button class="btn ghost" onclick="closeModal('scanModal')">ביטול</button><button class="btn primary" onclick="confirmScan()">הכנס למלאי</button></div>
+</div></div>
+
+<div class="modal-bg" id="signModal"><div class="modal">
+  <h2>חתימה</h2><p class="sub">חתום עם האצבע בתוך המסגרת.</p>
+  <canvas id="sigCanvas" width="440" height="200"></canvas>
+  <div class="modal-foot"><button class="btn ghost" onclick="sigClear()">נקה</button><button class="btn ghost" onclick="closeModal('signModal')">ביטול</button><button class="btn primary" onclick="sigSave()">שמור חתימה</button></div>
+</div></div>
+
+<div class="modal-bg" id="docViewModal"><div class="modal">
+  <h2 id="dvTitle" style="font-size:17px">מסמך</h2>
+  <div style="position:relative;margin:8px 0 14px"><img id="dvImg" style="width:100%;border-radius:12px;display:block"><img id="dvSig" style="position:absolute;bottom:6%;left:4%;width:30%;display:none"></div>
+  <div class="field"><label>שיוך לחנות</label><select id="dvStore" onchange="dvStoreChange()"></select></div>
+  <button class="btn primary" id="dvSignBtn" onclick="openSign()" style="width:100%;justify-content:center;margin-bottom:8px">✍️ חתום על המסמך</button>
+  <div class="modal-foot"><button class="btn sm danger" onclick="delDocCurrent()">🗑️ מחק</button><button class="btn ghost" onclick="exportDocPdf()">⬇️ PDF</button><button class="btn ghost" onclick="closeModal('docViewModal')">סגור</button></div>
+</div></div>
+
+<div class="modal-bg" id="aiKeyModal"><div class="modal">
+  <h2>הגדרת זיהוי אוטומטי (AI)</h2><p class="sub">כדי לזהות מוצרים מצילום מסמך צריך מפתח Anthropic. המפתח נשמר רק במכשיר הזה (לא מסונכרן, לא נשמר בקוד האתר), והבקשות נשלחות ישירות מהדפדפן ל-Anthropic.</p>
+  <div class="field"><label>מפתח API</label><input id="ak_input" placeholder="sk-ant-..." type="password"></div>
+  <p class="sub" style="font-size:11px">אם הגדרת פרוקסי (Netlify Function) עם המפתח בשרת — המערכת תשתמש בו אוטומטית והמפתח לא נחשף. שדה זה הוא גיבוי בלבד, לשימוש בלי פרוקסי.</p>
+  <div class="modal-foot"><button class="btn ghost" onclick="closeModal('aiKeyModal')">ביטול</button><button class="btn primary" onclick="saveAiKey()">שמור</button></div>
+</div></div>
+
+<div id="printArea"><img id="prImg"><img id="prSig" style="display:none"></div>
+
+<div class="toast" id="toast"></div>
+
+<button id="logoutBtn" onclick="logout()" style="position:fixed;top:14px;left:14px;z-index:80;background:rgba(244,63,94,.15);color:var(--danger);border:1px solid rgba(244,63,94,.3);border-radius:10px;padding:8px 14px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;backdrop-filter:blur(6px);display:none">⎋ התנתק</button>
+
+<div id="lockScreen" style="position:fixed;inset:0;z-index:9999;background:radial-gradient(900px 500px at 50% 0%,rgba(14,165,233,.15),transparent),#0a0e1a;display:none;place-items:center;padding:20px">
+  <div style="text-align:center;max-width:340px;width:100%">
+    <div style="width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-weight:900;color:#06121f;font-size:30px;margin:0 auto 18px">C</div>
+    <h2 style="font-size:22px;font-weight:800;margin-bottom:6px">מערכת ניהול</h2>
+    <p style="color:var(--muted);font-size:14px;margin-bottom:24px" id="lockSub">הזן קוד גישה</p>
+    <input id="pinInput" type="password" inputmode="numeric" placeholder="קוד" style="text-align:center;font-size:20px;letter-spacing:6px;margin-bottom:6px" onkeydown="if(event.key==='Enter')tryUnlock()">
+    <select id="userSelect" style="margin-bottom:14px;display:none"><option value="ישי">ישי (מנהל)</option><option value="מזכירה">מזכירה</option></select>
+    <button class="btn primary" style="width:100%;justify-content:center" onclick="tryUnlock()">כניסה</button>
+    <p id="pinErr" style="color:var(--danger);font-size:13px;margin-top:12px;display:none">קוד שגוי</p>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+// ====== הדבק כאן את ההגדרות מ-Firebase (שלב 3 במדריך) ======
+const firebaseConfig = {
+  apiKey: "AIzaSyBh5bW0yuO0lt3tCqsCpQF76Qk3EUYPlm4",
+  authDomain: "create-project-9737e.firebaseapp.com",
+  projectId: "create-project-9737e",
+  storageBucket: "create-project-9737e.firebasestorage.app",
+  messagingSenderId: "710271977914",
+  appId: "1:710271977914:web:0d3234b36e157c4dd17583"
+};
+// ============================================================
+
+window.FB = { config: firebaseConfig, ready: false };
+
+// פרטי ההתחברות למערכת
+const FB_EMAIL = "Cashphone21@gmail.com";
+const FB_PASSWORD = "220892!";
+
+if (firebaseConfig.apiKey) {
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+    const { getFirestore, doc, setDoc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const { getAuth, signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    // התחברות אוטומטית לפני גישה לנתונים
+    try {
+      await signInWithEmailAndPassword(auth, FB_EMAIL, FB_PASSWORD);
+    } catch(authErr) {
+      console.error("Auth failed", authErr);
+    }
+    const db = getFirestore(app);
+    const ref = doc(db, "cashphone", "data");
+    window.FB.save = async (data) => { try { await setDoc(ref, { json: JSON.stringify(data), at: Date.now() }); } catch(e){ console.error(e); } };
+    window.FB.listen = (cb) => onSnapshot(ref, (snap) => { if (snap.exists() && snap.data().json) cb(JSON.parse(snap.data().json)); });
+    window.FB.ready = true;
+    document.dispatchEvent(new Event("fb-ready"));
+    // Storage — best effort בלבד, לעולם לא חוסם את הסנכרון של Firestore
+    try {
+      const { getStorage, ref: sref, uploadString, getDownloadURL, deleteObject } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js");
+      const storage = getStorage(app);
+      window.FB.uploadImage = async (path, dataUrl) => { const r = sref(storage, path); await uploadString(r, dataUrl, "data_url"); return await getDownloadURL(r); };
+      window.FB.deleteImage = async (path) => { try { await deleteObject(sref(storage, path)); } catch(e){} };
+      window.FB.storageReady = true;
+    } catch(se) { console.error("Storage init failed (documents will use local fallback)", se); }
+  } catch(e) { console.error("Firebase init failed", e); }
+}
+</script>
+
+<script>
+let DB={stores:[],orders:[],products:[],log:[],payments:[],users:[],documents:[],ledger:[]};
+let currentIsAdmin=false;
+let editStoreId=null,depStoreId=null,editProdId=null,restockId=null,prodFilter='all';
+let fbSyncing=false, deferredPrompt=null, currentUser=null;
+
+function id(){return Math.random().toString(36).slice(2,10)}
+function storeById(i){return DB.stores.find(s=>s.id===i)}
+function prodById(i){return DB.products.find(p=>p.id===i)}
+function fmt(n){return '₪'+Number(n||0).toLocaleString('he-IL')}
+function timeAgo(t){const m=Math.floor((Date.now()-t)/60000);if(m<1)return 'עכשיו';if(m<60)return m+' דק׳';const h=Math.floor(m/60);if(h<24)return h+' שע׳';return Math.floor(h/24)+' ימים'}
+function bizName(b){return b==='cash'?'Cashphone':'בנייה יזמות'}
+function bizTag(b){return `<span class="biztag ${b}">${b==='cash'?'דיגיטלי':'פיזי'}</span>`}
+function tg(){document.getElementById('side').classList.toggle('open')}
+
+/* ===== PERSISTENCE: Firebase + local fallback ===== */
+function save(){
+  try{localStorage.setItem('cp_data',JSON.stringify(DB))}catch(e){}
+  if(window.FB&&window.FB.ready&&!fbSyncing){window.FB.save(DB)}
+  renderAll();
+}
+function load(){
+  // load from local first for instant display
+  try{const l=localStorage.getItem('cp_data');if(l){DB=JSON.parse(l)}}catch(e){}
+  if(!DB.log)DB.log=[];if(!DB.payments)DB.payments=[];
+  if(!DB.ledger)DB.ledger=[];if(!DB.documents)DB.documents=[];migrateLedger();
+  if(!DB.users||!DB.users.length)DB.users=[{code:'1990',name:'ישי',admin:true},{code:'2024',name:'מזכירה',admin:false}];
+  if(!DB.products.length&&!DB.stores.length)seed();
+}
+function logAction(txt){
+  if(!DB.log)DB.log=[];
+  DB.log.unshift({id:id(),txt,user:currentUser||'—',date:Date.now()});
+  if(DB.log.length>500)DB.log=DB.log.slice(0,500);
+}
+function connectFirebase(){
+  if(!(window.FB&&window.FB.ready))return;
+  document.getElementById('syncDot').classList.add('live');
+  document.getElementById('syncTxt').textContent='מסונכרן (Live)';
+  // push local data up if cloud empty, then listen
+  let first=true;
+  window.FB.listen((cloud)=>{
+    fbSyncing=true;
+    DB=cloud;
+    if(!DB.log)DB.log=[];if(!DB.payments)DB.payments=[];if(!DB.ledger)DB.ledger=[];if(!DB.documents)DB.documents=[];migrateLedger();if(!DB.users||!DB.users.length)DB.users=[{code:'1990',name:'ישי',admin:true},{code:'2024',name:'מזכירה',admin:false}];
+    renderAll();
+    fbSyncing=false;
+    first=false;
+  });
+  // if cloud has nothing yet, seed it with current local
+  setTimeout(()=>{if(first){window.FB.save(DB)}},1500);
+}
+document.addEventListener('fb-ready',connectFirebase);
+
+function seed(){
+  DB.stores=[
+    {id:id(),name:'מינימרקט הדקל',phone:'052-1112233',tax:'301234567',city:'באר שבע',type:'prepaid',balance:340,addr:'רחוב הדקל 5, באר שבע'},
+    {id:id(),name:'סלולר פלוס',phone:'054-9988776',tax:'302345678',city:'באר שבע',type:'credit',balance:-450,addr:'שדרות רגר 22, באר שבע'},
+    {id:id(),name:'פיצוציית הנגב',phone:'050-5544332',tax:'303456789',city:'אופקים',type:'prepaid',balance:0,addr:'הרצל 14, אופקים'},
+  ];
+  DB.products=[
+    {id:id(),name:'Steam 50₪',biz:'cash',price:50,cost:46,stock:null,min:0,supplier:'CodesWholesale'},
+    {id:id(),name:'Apple Gift 100₪',biz:'cash',price:100,cost:93,stock:null,min:0,supplier:'SEAGM'},
+    {id:id(),name:'סוללת גיבוי 10000mAh',biz:'bnaya',price:89,cost:55,stock:12,min:5,supplier:'ספק סין'},
+    {id:id(),name:'כבל USB-C מהיר',biz:'bnaya',price:35,cost:18,stock:3,min:5,supplier:'ספק סין'},
+    {id:id(),name:'מצלמת אבטחה WiFi',biz:'bnaya',price:220,cost:150,stock:7,min:3,supplier:'ספק מקומי'},
+  ];
+  DB.orders=[
+    {id:id(),storeId:DB.stores[0].id,prodId:DB.products[0].id,product:'Steam 50₪',biz:'cash',qty:2,amount:100,status:'done',date:Date.now()-3600e3},
+    {id:id(),storeId:DB.stores[1].id,prodId:DB.products[2].id,product:'סוללת גיבוי 10000mAh',biz:'bnaya',qty:1,amount:89,status:'new',date:Date.now()-1800e3},
+  ];
+  DB.ledger=[
+    {id:id(),storeId:DB.stores[0].id,delta:340,date:Date.now()-20*86400e3,kind:'initial',note:'יתרה'},
+    {id:id(),storeId:DB.stores[1].id,delta:-450,date:Date.now()-42*86400e3,kind:'order',note:'סחורה'},
+  ];
+}
+
+document.querySelectorAll('.navbtn[data-view]').forEach(b=>{b.onclick=()=>{const v=b.dataset.view;document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.navbtn[data-view="'+v+'"]').forEach(x=>x.classList.add('on'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('view-'+v).classList.add('on');document.getElementById('side').classList.remove('on');document.getElementById('side').classList.remove('open');if(v==='route')buildRoute();if(v==='reports')renderReports();if(v==='history')renderHistory();if(v==='users')renderUsers();if(v==='docs')renderDocs()}});
+document.querySelectorAll('#prodFilter .pill').forEach(p=>{p.onclick=()=>{document.querySelectorAll('#prodFilter .pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');prodFilter=p.dataset.f;renderProducts()}});
+
+function renderAll(){renderDash();renderOrders();renderProducts();renderStores();renderDebts()}
+
+/* ===== TEST MODE / DEMO DATA ===== */
+function testMode(){return localStorage.getItem('cp_testmode')==='1'}
+function toggleTestMode(){localStorage.setItem('cp_testmode',testMode()?'0':'1');renderAll();toast(testMode()?'מצב בדיקה פעיל 🧪 — כל מה שתוסיף מסומן כדוגמה':'מצב בדיקה כבוי')}
+function demoCounts(){return DB.stores.filter(s=>s.demo).length+DB.products.filter(p=>p.demo).length+DB.orders.filter(o=>o.demo).length+(DB.documents||[]).filter(d=>d.demo).length}
+function renderTools(){const box=document.getElementById('toolsBox');if(!box)return;const on=testMode();const n=demoCounts();
+  box.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:12px 14px">
+      <div><b>מצב בדיקה</b><div style="font-size:12px;color:var(--muted)">כשפעיל — כל מה שתוסיף מסומן כדוגמה וניתן למחיקה בלחיצה</div></div>
+      <button class="btn ${on?'primary':'ghost'}" onclick="toggleTestMode()">${on?'🧪 פעיל':'כבוי'}</button>
+    </div>
+    <button class="btn ghost" onclick="purgeDemo()" style="justify-content:center">🗑️ מחק נתוני בדיקה${n?` (${n})`:''}</button>
+  </div>`;
+}
+async function purgeDemo(){
+  const n=demoCounts();if(!n){toast('אין נתוני בדיקה למחיקה');return}
+  if(!confirm('למחוק '+n+' פריטי בדיקה? הנתונים האמיתיים יישארו.'))return;
+  const demoStoreIds=new Set(DB.stores.filter(s=>s.demo).map(s=>s.id));
+  const demoDocs=(DB.documents||[]).filter(d=>d.demo||demoStoreIds.has(d.storeId));
+  for(const d of demoDocs){if(d.path&&window.FB&&window.FB.deleteImage)await window.FB.deleteImage(d.path);if(d.sigPath&&window.FB&&window.FB.deleteImage)await window.FB.deleteImage(d.sigPath)}
+  DB.documents=(DB.documents||[]).filter(d=>!(d.demo||demoStoreIds.has(d.storeId)));
+  DB.products=DB.products.filter(p=>!p.demo);
+  DB.orders=DB.orders.filter(o=>!(o.demo||demoStoreIds.has(o.storeId)));
+  DB.payments=(DB.payments||[]).filter(p=>!demoStoreIds.has(p.storeId));
+  DB.ledger=(DB.ledger||[]).filter(l=>!demoStoreIds.has(l.storeId));
+  DB.stores=DB.stores.filter(s=>!s.demo);
+  logAction('מחק נתוני בדיקה ('+n+')');save();renderAll();toast('נתוני הבדיקה נמחקו ✓');
+}
+
+function renderDash(){
+  const today=DB.orders.filter(o=>o.date>Date.now()-86400e3);
+  const rev=today.reduce((s,o)=>s+(o.amount||0),0);
+  const profitToday=today.filter(o=>o.status==='done').reduce((s,o)=>s+(o.profit||0),0);
+  const cashRev=today.filter(o=>o.biz==='cash').reduce((s,o)=>s+o.amount,0);
+  const bnayaRev=today.filter(o=>o.biz==='bnaya').reduce((s,o)=>s+o.amount,0);
+  const lowStock=DB.products.filter(p=>p.stock!==null&&p.stock<=p.min).length;
+  const totalDebt=DB.stores.filter(s=>s.balance<0).reduce((s,x)=>s+Math.abs(x.balance),0);
+  document.getElementById('statCards').innerHTML=`
+    ${stat('מכירות היום',fmt(rev),'green','💵',`Cashphone ${fmt(cashRev)} · בנייה ${fmt(bnayaRev)}`)}
+    ${stat('רווח היום',fmt(profitToday),'green','📈','על הזמנות שהושלמו')}
+    ${stat('הזמנות ממתינות',DB.orders.filter(o=>o.status==='new').length,'amber','⏳','דורשות טיפול')}
+    ${stat('מלאי נמוך',lowStock,'purple','📦','מוצרים פיזיים להזמנה')}
+    ${stat('סך חובות פתוחים',fmt(totalDebt),'red','⚠️','חנויות באשראי')}
+  `;
+  const recent=[...DB.orders].sort((a,b)=>b.date-a.date).slice(0,5);
+  document.getElementById('recentOrders').innerHTML=recent.length?ordTable(recent,true):emptyMsg('🧾','אין הזמנות עדיין');
+  renderTools();
+}
+function stat(lbl,num,cls,ic,sub){return `<div class="card stat"><div class="lbl">${ic} ${lbl}</div><div class="num ${cls}">${num}</div><div class="sub">${sub}</div></div>`}
+function emptyMsg(ic,t){return `<div class="empty"><div class="big">${ic}</div>${t}</div>`}
+
+function ordTable(list,compact){
+  let rows=list.map(o=>{
+    const st=storeById(o.storeId);
+    const stt=o.status==='done'?'<span class="tag green">הושלמה</span>':'<span class="tag amber">חדשה</span>';
+    const act=compact?'':`<td class="hide-m">${o.status==='new'?`<button class="btn sm primary" onclick="markDone('${o.id}')">הושלם</button> `:`<button class="btn sm ghost" onclick="notifyStore('${o.id}')">📲 עדכן לקוח</button> `}<button class="btn sm danger" onclick="delOrder('${o.id}')">מחיקה</button></td>`;
+    return `<tr><td><b>${st?st.name:'—'}</b></td><td>${o.product} ${o.qty>1?`×${o.qty}`:''}${bizTag(o.biz)}</td><td class="money">${fmt(o.amount)}</td><td>${stt}</td><td class="hide-m">${timeAgo(o.date)}</td>${act}</tr>`;
+  }).join('');
+  return `<table><thead><tr><th>חנות</th><th>מוצר</th><th>סכום</th><th>סטטוס</th><th class="hide-m">זמן</th>${compact?'':'<th class="hide-m">פעולות</th>'}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+function renderOrders(){
+  const q=(document.getElementById('ordSearch').value||'').trim();
+  let list=[...DB.orders].sort((a,b)=>b.date-a.date);
+  if(q)list=list.filter(o=>{const s=storeById(o.storeId);return (s&&s.name.includes(q))||o.product.includes(q)});
+  document.getElementById('ordersTable').innerHTML=list.length?ordTable(list,false):emptyMsg('🧾','לא נמצאו הזמנות');
+}
+
+function renderProducts(){
+  let list=[...DB.products];
+  if(prodFilter==='cash')list=list.filter(p=>p.biz==='cash');
+  else if(prodFilter==='bnaya')list=list.filter(p=>p.biz==='bnaya');
+  else if(prodFilter==='low')list=list.filter(p=>p.stock!==null&&p.stock<=p.min);
+  if(!list.length){document.getElementById('productsTable').innerHTML=emptyMsg('📦','אין מוצרים');return}
+  let rows=list.map(p=>{
+    let stockCell;
+    if(p.stock===null)stockCell='<span class="tag blue">דיגיטלי</span>';
+    else if(p.stock<=0)stockCell='<span class="tag red">אזל</span>';
+    else if(p.stock<=p.min)stockCell=`<span class="tag amber">נמוך · ${p.stock}</span>`;
+    else stockCell=`<span class="tag green">${p.stock} יח׳</span>`;
+    const restock=p.stock!==null?`<button class="btn sm ghost" onclick="openRestock('${p.id}')">+ מלאי</button> `:'';
+    const profit=(p.price||0)-(p.cost||0);
+    const pct=p.price>0?Math.round(profit/p.price*100):0;
+    const profitCell=p.cost>0?`<span style="color:${profit>=0?'var(--accent)':'var(--danger)'};font-weight:700">${fmt(profit)} <small style="opacity:.7">(${pct}%)</small></span>`:'<span style="color:var(--muted)">—</span>';
+    return `<tr><td><b>${p.name}</b>${p.supplier?`<br><small style="color:var(--muted)">🏭 ${p.supplier}</small>`:''}</td><td>${bizName(p.biz)}${bizTag(p.biz)}</td><td class="money">${fmt(p.price)}</td><td>${profitCell}</td><td>${stockCell}</td><td>${restock}<button class="btn sm ghost hide-m" onclick="openProduct('${p.id}')">עריכה</button> <button class="btn sm danger" onclick="delProduct('${p.id}')">מחיקה</button></td></tr>`;
+  }).join('');
+  document.getElementById('productsTable').innerHTML=`<table><thead><tr><th>מוצר</th><th>עסק</th><th>מחיר</th><th>רווח</th><th>מלאי</th><th>פעולות</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderStores(){
+  const q=(document.getElementById('stSearch').value||'').trim();
+  let list=[...DB.stores];if(q)list=list.filter(s=>s.name.includes(q)||s.phone.includes(q));
+  if(!list.length){document.getElementById('storesTable').innerHTML=emptyMsg('🏪','אין חנויות');return}
+  let rows=list.map(s=>{
+    const typeTag=s.type==='credit'?'<span class="tag purple">אשראי</span>':'<span class="tag blue">תשלום מראש</span>';
+    const bal=s.balance>=0?`<span class="tag green">${fmt(s.balance)}</span>`:`<span class="tag red">${fmt(s.balance)}</span>`;
+    return `<tr><td><b>${s.name}</b><br><small style="color:var(--muted)">${s.city||''}</small></td><td class="hide-m">${s.phone||'—'}</td><td>${typeTag}</td><td>${bal}</td><td><button class="btn sm ghost" onclick="openDeposit('${s.id}')">+ תשלום</button> <button class="btn sm ghost hide-m" onclick="openStore('${s.id}')">עריכה</button> <button class="btn sm ghost" onclick="openStoreDocs('${s.id}')">🗂️ (${(DB.documents||[]).filter(d=>d.storeId===s.id).length})</button> <button class="btn sm danger" onclick="delStore('${s.id}')">מחיקה</button></td></tr>`;
+  }).join('');
+  document.getElementById('storesTable').innerHTML=`<table><thead><tr><th>חנות</th><th class="hide-m">טלפון</th><th>סוג</th><th>יתרה</th><th>פעולות</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* ===== DEBT AGING (dated ledger) ===== */
+const OVERDUE_DAYS=30, WARN_DAYS=14;
+function ledgerAdd(storeId,delta,kind,note){if(!DB.ledger)DB.ledger=[];DB.ledger.push({id:id(),storeId,delta,date:Date.now(),kind,note:note||''})}
+function migrateLedger(){if(!DB.ledger)DB.ledger=[];const have={};DB.ledger.forEach(l=>have[l.storeId]=true);(DB.stores||[]).forEach(s=>{if(s.balance&&!have[s.id])DB.ledger.push({id:id(),storeId:s.id,delta:s.balance,date:Date.now(),kind:'initial',note:'יתרה קיימת'})})}
+function debtInfo(store){
+  const L=(DB.ledger||[]).filter(l=>l.storeId===store.id).sort((a,b)=>a.date-b.date);
+  let charges=[],credit=0;
+  L.forEach(e=>{
+    if(e.delta<0){let amt=-e.delta;if(credit>0){const u=Math.min(credit,amt);credit-=u;amt-=u}if(amt>0.001)charges.push({amt,date:e.date})}
+    else if(e.delta>0){let pay=e.delta;while(pay>0&&charges.length){const c=charges[0];const u=Math.min(pay,c.amt);c.amt-=u;pay-=u;if(c.amt<=0.001)charges.shift()}if(pay>0)credit+=pay}
+  });
+  const outstanding=charges.reduce((s,c)=>s+c.amt,0);
+  const oldest=charges.length?charges[0].date:null;
+  return {outstanding,days:oldest?Math.floor((Date.now()-oldest)/86400e3):0,oldest};
+}
+function ageCls(days){return days>=OVERDUE_DAYS?'red':days>=WARN_DAYS?'amber':'green'}
+function remindDebt(sid){const s=storeById(sid);if(!s)return;const info=debtInfo(s);const debt=Math.abs(s.balance);const phone=(s.phone||'').replace(/\D/g,'').replace(/^0/,'972');if(!phone){toast('אין טלפון לחנות');return}const msg=encodeURIComponent(`שלום ${s.name}, תזכורת ידידותית: קיים חוב פתוח של ${fmt(debt)}${info.days?` (${info.days} ימים)`:''}. נשמח להסדיר בהקדם. תודה 🙏`);window.open(`https://wa.me/${phone}?text=${msg}`,'_blank');logAction('שלח תזכורת חוב: '+s.name)}
+
+function renderDebts(){
+  const debtors=DB.stores.filter(s=>s.balance<0);
+  const credit=DB.stores.filter(s=>s.balance>0);
+  const overdue=debtors.filter(s=>debtInfo(s).days>=OVERDUE_DAYS);
+  document.getElementById('debtStats').innerHTML=`
+    ${stat('סך חובות פתוחים',fmt(debtors.reduce((s,x)=>s+Math.abs(x.balance),0)),'red','⚠️',debtors.length+' חנויות')}
+    ${stat('חובות באיחור',overdue.length,overdue.length?'red':'green','⏰','מעל '+OVERDUE_DAYS+' ימים')}
+    ${stat('סך יתרות זכות',fmt(credit.reduce((s,x)=>s+x.balance,0)),'green','✅',credit.length+' חנויות')}
+  `;
+  const list=[...DB.stores].map(s=>({s,info:debtInfo(s)})).sort((a,b)=>{if(a.s.balance<0&&b.s.balance<0)return b.info.days-a.info.days;return a.s.balance-b.s.balance});
+  const rows=list.map(({s,info})=>{
+    const isDebt=s.balance<0;
+    const tag=isDebt?`<span class="tag red">חוב ${fmt(Math.abs(s.balance))}</span>`:s.balance>0?`<span class="tag green">זכות ${fmt(s.balance)}</span>`:'<span class="tag blue">מאופס</span>';
+    const age=isDebt&&info.days>0?`<span class="tag ${ageCls(info.days)}">${info.days} ימים</span>`:'<small style="color:var(--muted)">—</small>';
+    const act=isDebt?`<button class="btn sm ghost" onclick="remindDebt('${s.id}')">📲 תזכורת</button> <button class="btn sm primary" onclick="openDeposit('${s.id}')">תשלום</button>`:`<button class="btn sm primary" onclick="openDeposit('${s.id}')">תשלום</button>`;
+    return `<tr><td><b>${s.name}</b></td><td>${tag}</td><td>${age}</td><td>${act}</td></tr>`;
+  }).join('');
+  document.getElementById('debtsTable').innerHTML=`<table><thead><tr><th>חנות</th><th>מצב</th><th>גיל חוב</th><th>פעולות</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function openOrder(){
+  document.getElementById('o_store').innerHTML=DB.stores.map(s=>`<option value="${s.id}">${s.name} (${s.type==='credit'?'אשראי':'יתרה '+fmt(s.balance)})</option>`).join('');
+  document.getElementById('o_product').innerHTML=DB.products.map(p=>{const out=p.stock!==null&&p.stock<=0?' [אזל]':'';return `<option value="${p.id}">${p.name}${out}</option>`}).join('');
+  document.getElementById('o_qty').value=1;document.getElementById('o_status').value='new';
+  onProdPick();show('orderModal');
+}
+function onProdPick(){const p=prodById(document.getElementById('o_product').value);if(p)document.getElementById('o_price').value=p.price;calcTotal()}
+function calcTotal(){const q=+document.getElementById('o_qty').value||0;const pr=+document.getElementById('o_price').value||0;document.getElementById('o_total').value=fmt(q*pr)}
+function saveOrder(){
+  const storeId=document.getElementById('o_store').value;
+  const p=prodById(document.getElementById('o_product').value);
+  const qty=+document.getElementById('o_qty').value||1;
+  const price=+document.getElementById('o_price').value||0;
+  const status=document.getElementById('o_status').value;
+  if(!storeId||!p){toast('יש לבחור חנות ומוצר');return}
+  if(p.stock!==null&&status==='done'&&p.stock<qty){toast('אין מספיק מלאי! נותרו '+p.stock);return}
+  const amount=qty*price;
+  const profit=(price-(p.cost||0))*qty;
+  DB.orders.push({id:id(),storeId,prodId:p.id,product:p.name,biz:p.biz,qty,amount,profit,cost:(p.cost||0)*qty,status,date:Date.now(),...(testMode()?{demo:true}:{})});
+  logAction(`הזמנה חדשה: ${p.name} ×${qty} — ${storeById(storeId)?.name||''}`);
+  if(status==='done')applyDone(storeId,p,qty,amount);
+  closeModal('orderModal');save();toast('ההזמנה נשמרה ✓');
+}
+function applyDone(storeId,p,qty,amount){const s=storeById(storeId);if(s){s.balance-=amount;ledgerAdd(storeId,-amount,'order',p?p.name:'')}if(p&&p.stock!==null)p.stock=Math.max(0,p.stock-qty)}
+function markDone(oid){
+  const o=DB.orders.find(x=>x.id===oid);if(!o||o.status==='done')return;
+  const p=prodById(o.prodId);
+  if(p&&p.stock!==null&&p.stock<o.qty){toast('אין מספיק מלאי');return}
+  o.status='done';applyDone(o.storeId,p,o.qty,o.amount);logAction('השלים הזמנה: '+o.product);save();toast('ההזמנה הושלמה ✓');
+}
+function delOrder(oid){if(!confirm('למחוק הזמנה?'))return;const o=DB.orders.find(x=>x.id===oid);DB.orders=DB.orders.filter(x=>x.id!==oid);if(o)logAction('מחק הזמנה: '+o.product);save();toast('נמחק')}
+
+function openProduct(pid){
+  editProdId=pid||null;document.getElementById('prodTitle').textContent=pid?'עריכת מוצר':'מוצר חדש';
+  const p=pid?prodById(pid):{name:'',biz:'cash',price:0,cost:0,stock:0,min:5,supplier:''};
+  document.getElementById('p_name').value=p.name;document.getElementById('p_biz').value=p.biz;document.getElementById('p_price').value=p.price;
+  document.getElementById('p_cost').value=p.cost||0;document.getElementById('p_supplier').value=p.supplier||'';
+  document.getElementById('p_stock').value=p.stock===null?0:p.stock;document.getElementById('p_min').value=p.min||5;
+  toggleStock();calcMargin();show('productModal');
+}
+function calcMargin(){
+  const price=+document.getElementById('p_price').value||0;
+  const cost=+document.getElementById('p_cost').value||0;
+  const box=document.getElementById('marginBox');
+  if(price>0&&cost>0){const profit=price-cost;const pct=Math.round(profit/price*100);box.style.display='block';box.textContent=`רווח ליחידה: ${fmt(profit)} (${pct}%)`;box.style.color=profit>=0?'var(--accent)':'var(--danger)'}
+  else box.style.display='none';
+}
+document.getElementById('p_biz').addEventListener('change',toggleStock);
+function toggleStock(){document.getElementById('stockRow').style.display=document.getElementById('p_biz').value==='bnaya'?'grid':'none'}
+function saveProduct(){
+  const name=document.getElementById('p_name').value.trim();if(!name){toast('יש למלא שם');return}
+  const biz=document.getElementById('p_biz').value;
+  const data={name,biz,price:+document.getElementById('p_price').value||0,cost:+document.getElementById('p_cost').value||0,supplier:document.getElementById('p_supplier').value.trim(),stock:biz==='bnaya'?(+document.getElementById('p_stock').value||0):null,min:+document.getElementById('p_min').value||0};
+  if(editProdId){Object.assign(prodById(editProdId),data);logAction('עדכן מוצר: '+name)}else{DB.products.push({id:id(),...data,...(testMode()?{demo:true}:{})});logAction('הוסיף מוצר: '+name)}
+  closeModal('productModal');save();toast('המוצר נשמר ✓');
+}
+function delProduct(pid){if(!confirm('למחוק מוצר?'))return;const p=prodById(pid);DB.products=DB.products.filter(x=>x.id!==pid);if(p)logAction('מחק מוצר: '+p.name);save();toast('נמחק')}
+function delStore(sid){
+  const s=storeById(sid);if(!s)return;
+  const relatedOrders=DB.orders.filter(o=>o.storeId===sid).length;
+  let msg='למחוק את החנות "'+s.name+'"?';
+  if(relatedOrders>0)msg+=`\n\n⚠️ לחנות יש ${relatedOrders} הזמנות. החנות תימחק אבל ההזמנות יישארו (ללא שיוך).`;
+  if(s.balance!==0)msg+=`\n\n⚠️ לחנות יש יתרה/חוב של ${fmt(s.balance)}.`;
+  if(!confirm(msg))return;
+  DB.stores=DB.stores.filter(x=>x.id!==sid);
+  logAction('מחק חנות: '+s.name);
+  save();toast('החנות נמחקה');
+}
+function clearDemoData(){
+  if(!confirm('⚠️ פעולה זו תמחק את כל הנתונים (חנויות, מוצרים, הזמנות, תשלומים) ותתחיל מאפס.\n\nלהמשיך?'))return;
+  if(!confirm('בטוח לגמרי? אי אפשר לבטל את הפעולה הזו!'))return;
+  DB.stores=[];DB.products=[];DB.orders=[];DB.payments=[];
+  logAction('איפס את כל הנתונים');
+  save();toast('כל הנתונים נמחקו — התחל נקי ✓');
+}
+function openRestock(pid){restockId=pid;const p=prodById(pid);document.getElementById('restockSub').textContent=`${p.name} · במלאי כעת ${p.stock} יח׳`;document.getElementById('r_qty').value='';show('restockModal')}
+function saveRestock(){const q=+document.getElementById('r_qty').value||0;if(q<=0){toast('יש להזין כמות');return}prodById(restockId).stock+=q;closeModal('restockModal');save();toast(`נוספו ${q} יח׳ ✓`)}
+
+function openStore(sid){
+  editStoreId=sid||null;document.getElementById('storeModalTitle').textContent=sid?'עריכת חנות':'חנות חדשה';
+  const s=sid?storeById(sid):{name:'',phone:'',tax:'',city:'',type:'prepaid',balance:0,addr:''};
+  document.getElementById('s_name').value=s.name;document.getElementById('s_phone').value=s.phone||'';document.getElementById('s_tax').value=s.tax||'';document.getElementById('s_city').value=s.city||'';document.getElementById('s_type').value=s.type||'prepaid';document.getElementById('s_balance').value=s.balance||0;document.getElementById('s_addr').value=s.addr||'';
+  show('storeModal');
+}
+function saveStore(){
+  const name=document.getElementById('s_name').value.trim();if(!name){toast('יש למלא שם');return}
+  const data={name,phone:document.getElementById('s_phone').value.trim(),tax:document.getElementById('s_tax').value.trim(),city:document.getElementById('s_city').value.trim(),type:document.getElementById('s_type').value,balance:+document.getElementById('s_balance').value||0,addr:document.getElementById('s_addr').value.trim()};
+  if(editStoreId){const st=storeById(editStoreId);const oldBal=st.balance||0;Object.assign(st,data);if(data.balance!==oldBal)ledgerAdd(editStoreId,data.balance-oldBal,'adjust','עדכון יתרה ידני');logAction('עדכן חנות: '+name)}else{const nid=id();DB.stores.push({id:nid,...data,...(testMode()?{demo:true}:{})});if(data.balance)ledgerAdd(nid,data.balance,'initial','יתרה התחלתית');logAction('הוסיף חנות: '+name)}
+  closeModal('storeModal');save();toast('החנות נשמרה ✓');
+}
+function openDeposit(sid){depStoreId=sid;const s=storeById(sid);document.getElementById('depSub').textContent=`${s.name} · ${s.balance<0?'חוב '+fmt(Math.abs(s.balance)):'יתרה '+fmt(s.balance)}`;document.getElementById('d_amount').value='';document.getElementById('d_note').value='';show('depModal')}
+function grabStoreLocation(){
+  const btn=document.getElementById('grabLocBtn');
+  if(!navigator.geolocation){toast('הדפדפן לא תומך באיתור מיקום');return}
+  btn.textContent='⏳ מאתר מיקום...';btn.disabled=true;
+  navigator.geolocation.getCurrentPosition(
+    p=>{
+      const lat=p.coords.latitude.toFixed(5);
+      const lng=p.coords.longitude.toFixed(5);
+      document.getElementById('s_addr').value=`${lat},${lng}`;
+      btn.textContent='✅ המיקום נתפס!';btn.disabled=false;
+      toast('המיקום נשמר בשדה ✓');
+      setTimeout(()=>{btn.textContent='📍 מצא את המיקום הנוכחי שלי'},2500);
+    },
+    e=>{
+      btn.textContent='📍 מצא את המיקום הנוכחי שלי';btn.disabled=false;
+      toast('לא ניתן לאתר מיקום. בדוק הרשאות מיקום בדפדפן');
+    },
+    {enableHighAccuracy:true,timeout:10000}
+  );
+}
+function saveDeposit(){const amt=+document.getElementById('d_amount').value||0;if(amt<=0){toast('יש להזין סכום');return}const s=storeById(depStoreId);if(!s){toast('שגיאה: החנות לא נמצאה');closeModal('depModal');return}s.balance+=amt;ledgerAdd(depStoreId,+amt,'payment',document.getElementById('d_note').value.trim());if(!DB.payments)DB.payments=[];DB.payments.unshift({id:id(),storeId:depStoreId,storeName:s.name,amount:amt,note:document.getElementById('d_note').value.trim(),date:Date.now()});logAction(`תשלום מ-${s.name}: ${fmt(amt)}`);closeModal('depModal');save();toast(`נרשמו ${fmt(amt)} ✓`)}
+
+function show(i){document.getElementById(i).classList.add('show')}
+
+/* ===== ROUTE / WORK PATH ===== */
+let myLoc=null, routeFilterMode='all';
+document.querySelectorAll('#routeFilter .pill').forEach(p=>{p.onclick=()=>{document.querySelectorAll('#routeFilter .pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');routeFilterMode=p.dataset.rf;buildRoute()}});
+function parseCoords(str){if(!str)return null;const m=str.trim().match(/^(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)$/);return m?{lat:+m[1],lng:+m[2]}:null}
+function dist(a,b){const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180,la1=a.lat*Math.PI/180,la2=b.lat*Math.PI/180;const x=Math.sin(dLat/2)**2+Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
+function locateMe(){
+  const st=document.getElementById('locStatus');
+  st.textContent='מאתר מיקום...';
+  if(!navigator.geolocation){st.textContent='הדפדפן לא תומך באיתור. הזן מיקום ידנית למטה.';return}
+  navigator.geolocation.getCurrentPosition(
+    p=>{myLoc={lat:p.coords.latitude,lng:p.coords.longitude};st.innerHTML='✅ נמצא מיקומך · המסלול מסודר לפי קרבה';buildRoute()},
+    e=>{st.textContent='לא ניתן לאתר אוטומטית. הזן מיקום ידנית למטה (כתובת או קואורדינטות).';},
+    {enableHighAccuracy:true,timeout:8000}
+  );
+}
+function setManualLoc(){
+  const v=document.getElementById('manualLoc').value.trim();
+  if(!v){toast('הזן מיקום');return}
+  const c=parseCoords(v);
+  if(c){myLoc=c;document.getElementById('locStatus').innerHTML='✅ מיקום התחלה נקבע · מסלול לפי קרבה';buildRoute()}
+  else{myLoc={addr:v};document.getElementById('locStatus').innerHTML='✅ מיקום לפי כתובת';buildRoute()}
+}
+function storeCoords(s){return parseCoords(s.addr)}
+function buildRoute(){
+  let list=DB.stores.filter(s=>s.addr&&s.addr.trim());
+  if(routeFilterMode==='debt')list=list.filter(s=>s.balance<0);
+  if(!list.length){document.getElementById('routeTable').innerHTML=emptyMsg('🗺️','אין חנויות עם כתובת. הוסף כתובת בכרטיס החנות.');document.getElementById('openAllBtn').style.display='none';return}
+  if(myLoc&&myLoc.lat){
+    list=list.map(s=>{const c=storeCoords(s);return{s,c,d:c?dist(myLoc,c):Infinity}}).sort((a,b)=>a.d-b.d).map(x=>x.s);
+  }
+  let rows=list.map((s,i)=>{
+    const c=storeCoords(s);
+    const destParam=encodeURIComponent(c?`${c.lat},${c.lng}`:s.addr);
+    const navGoogle=`https://www.google.com/maps/dir/?api=1&destination=${destParam}`;
+    const navWaze=c?`https://waze.com/ul?ll=${c.lat},${c.lng}&navigate=yes`:`https://waze.com/ul?q=${encodeURIComponent(s.addr)}&navigate=yes`;
+    const waMsg=encodeURIComponent(`שלום, מ-Cashphone. אני בדרך אליכם. מיקום: https://maps.google.com/?q=${destParam}`);
+    const phone=(s.phone||'').replace(/[^0-9]/g,'').replace(/^0/,'972');
+    const wa=phone?`https://wa.me/${phone}?text=${waMsg}`:null;
+    const balTag=s.balance<0?`<span class="tag red">חוב ${fmt(Math.abs(s.balance))}</span>`:s.balance>0?`<span class="tag green">${fmt(s.balance)}</span>`:'<span class="tag blue">מאופס</span>';
+    return `<tr>
+      <td style="width:42px"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#06121f;display:grid;place-items:center;font-weight:800">${i+1}</div></td>
+      <td><b>${s.name}</b><br><small style="color:var(--muted)">${s.addr}</small></td>
+      <td>${balTag}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <a href="${navWaze}" target="_blank" class="btn sm primary" style="text-decoration:none;background:linear-gradient(135deg,#33ccff,#0a8ed9);color:#fff">Waze</a>
+        <a href="${navGoogle}" target="_blank" class="btn sm ghost" style="text-decoration:none">Maps</a>
+        ${wa?`<a href="${wa}" target="_blank" class="btn sm ghost" style="text-decoration:none">📲</a>`:''}
+      </td></tr>`;
+  }).join('');
+  document.getElementById('routeTable').innerHTML=`<table><tbody>${rows}</tbody></table>`;
+  window._routeStops=list.map(s=>{const c=storeCoords(s);return c?`${c.lat},${c.lng}`:s.addr});
+  document.getElementById('openAllBtn').style.display=list.length?'inline-flex':'none';
+}
+function openFullRoute(){
+  const stops=window._routeStops||[];
+  if(!stops.length)return;
+  const choice=confirm('לחץ "אישור" לניווט ב-Google Maps (כל העצירות במסלול אחד),\nאו "ביטול" לניווט ב-Waze (עצירה ראשונה).');
+  if(choice){
+    let origin=myLoc&&myLoc.lat?`${myLoc.lat},${myLoc.lng}`:(myLoc&&myLoc.addr?myLoc.addr:'');
+    const dest=stops[stops.length-1];
+    const waypoints=stops.slice(0,-1).map(encodeURIComponent).join('|');
+    let url=`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}`;
+    if(origin)url+=`&origin=${encodeURIComponent(origin)}`;
+    if(waypoints)url+=`&waypoints=${waypoints}`;
+    window.open(url,'_blank');
+  } else {
+    // Waze supports one destination at a time
+    const first=stops[0];
+    const c=parseCoords(first);
+    const url=c?`https://waze.com/ul?ll=${c.lat},${c.lng}&navigate=yes`:`https://waze.com/ul?q=${encodeURIComponent(first)}&navigate=yes`;
+    window.open(url,'_blank');
+  }
+}
+
+/* ===== REPORTS ===== */
+let repRange=7;
+document.querySelectorAll('#repRange .pill').forEach(p=>{p.onclick=()=>{document.querySelectorAll('#repRange .pill').forEach(x=>x.classList.remove('on'));p.classList.add('on');repRange=+p.dataset.r;renderReports()}});
+function renderReports(){
+  const since=Date.now()-repRange*86400e3;
+  const done=DB.orders.filter(o=>o.status==='done'&&o.date>=since);
+  const rev=done.reduce((s,o)=>s+(o.amount||0),0);
+  const profit=done.reduce((s,o)=>s+(o.profit||0),0);
+  const cost=done.reduce((s,o)=>s+(o.cost||0),0);
+  const margin=rev>0?Math.round(profit/rev*100):0;
+  document.getElementById('repStats').innerHTML=`
+    ${stat('הכנסות',fmt(rev),'green','💵',done.length+' מכירות')}
+    ${stat('רווח נקי',fmt(profit),'green','📈',margin+'% שולי רווח')}
+    ${stat('עלות סחורה',fmt(cost),'amber','📦','מה ששילמת לספקים')}
+  `;
+  // top products
+  const byProd={};
+  done.forEach(o=>{if(!byProd[o.product])byProd[o.product]={qty:0,rev:0,profit:0};byProd[o.product].qty+=o.qty;byProd[o.product].rev+=o.amount;byProd[o.product].profit+=(o.profit||0)});
+  const top=Object.entries(byProd).sort((a,b)=>b[1].rev-a[1].rev).slice(0,8);
+  document.getElementById('topProducts').innerHTML=top.length?`<table><thead><tr><th>מוצר</th><th>כמות</th><th>הכנסה</th><th>רווח</th></tr></thead><tbody>${top.map(([n,d])=>`<tr><td><b>${n}</b></td><td>${d.qty}</td><td class="money">${fmt(d.rev)}</td><td class="money" style="color:var(--accent)">${fmt(d.profit)}</td></tr>`).join('')}</tbody></table>`:emptyMsg('🏆','אין מכירות בתקופה');
+  // by business
+  const cash=done.filter(o=>o.biz==='cash');const bnaya=done.filter(o=>o.biz==='bnaya');
+  const bizRow=(name,arr)=>{const r=arr.reduce((s,o)=>s+o.amount,0);const pf=arr.reduce((s,o)=>s+(o.profit||0),0);return `<tr><td><b>${name}</b></td><td>${arr.length}</td><td class="money">${fmt(r)}</td><td class="money" style="color:var(--accent)">${fmt(pf)}</td></tr>`};
+  document.getElementById('bizBreak').innerHTML=`<table><thead><tr><th>עסק</th><th>מכירות</th><th>הכנסה</th><th>רווח</th></tr></thead><tbody>${bizRow('Cashphone (דיגיטלי)',cash)}${bizRow('בנייה יזמות (פיזי)',bnaya)}</tbody></table>`;
+}
+
+/* ===== HISTORY ===== */
+function renderHistory(){
+  if(!DB.log||!DB.log.length){document.getElementById('historyTable').innerHTML=emptyMsg('🕘','אין פעולות מתועדות עדיין');return}
+  let rows=DB.log.slice(0,200).map(l=>`<tr><td>${l.txt}</td><td class="hide-m"><span class="tag blue">${l.user}</span></td><td class="hide-m" style="color:var(--muted)">${new Date(l.date).toLocaleString('he-IL')}</td></tr>`).join('');
+  document.getElementById('historyTable').innerHTML=`<table><thead><tr><th>פעולה</th><th class="hide-m">משתמש</th><th class="hide-m">זמן</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* ===== EXCEL EXPORT ===== */
+function exportExcel(){
+  // CSV that Excel opens natively, with BOM for Hebrew
+  let csv='\uFEFF';
+  csv+='=== הזמנות ===\n';
+  csv+='תאריך,חנות,מוצר,עסק,כמות,סכום,רווח,סטטוס\n';
+  DB.orders.forEach(o=>{const s=storeById(o.storeId);csv+=`${new Date(o.date).toLocaleDateString('he-IL')},"${s?s.name:''}","${o.product}",${o.biz==='cash'?'Cashphone':'בנייה'},${o.qty},${o.amount},${o.profit||0},${o.status==='done'?'הושלמה':'חדשה'}\n`});
+  csv+='\n=== חנויות ===\n';
+  csv+='שם,טלפון,עיר,סוג,יתרה\n';
+  DB.stores.forEach(s=>{csv+=`"${s.name}",${s.phone||''},"${s.city||''}",${s.type==='credit'?'אשראי':'מראש'},${s.balance}\n`});
+  csv+='\n=== מוצרים ===\n';
+  csv+='שם,עסק,מחיר,עלות,רווח,מלאי,ספק\n';
+  DB.products.forEach(p=>{csv+=`"${p.name}",${p.biz==='cash'?'Cashphone':'בנייה'},${p.price},${p.cost||0},${(p.price||0)-(p.cost||0)},${p.stock===null?'דיגיטלי':p.stock},"${p.supplier||''}"\n`});
+  csv+='\n=== תשלומים ===\n';
+  csv+='תאריך,חנות,סכום,הערה\n';
+  (DB.payments||[]).forEach(pay=>{csv+=`${new Date(pay.date).toLocaleDateString('he-IL')},"${pay.storeName}",${pay.amount},"${pay.note||''}"\n`});
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`cashphone-${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  URL.revokeObjectURL(url);
+  toast('הקובץ הורד ✓');
+}
+
+/* ===== LOCK / SIMPLE AUTH ===== */
+function findUser(code){return (DB.users||[]).find(u=>u.code===code)}
+function checkLock(){
+  const unlocked=sessionStorage.getItem('cp_user');
+  if(unlocked){currentUser=unlocked;const u=findUser(sessionStorage.getItem('cp_code'));currentIsAdmin=u?!!u.admin:false;showWhoami();updateAdminUI();document.getElementById('logoutBtn').style.display='block';return}
+  document.getElementById('lockScreen').style.display='grid';
+}
+function tryUnlock(){
+  const pin=document.getElementById('pinInput').value.trim();
+  const u=findUser(pin);
+  if(u){
+    currentUser=u.name;currentIsAdmin=!!u.admin;
+    sessionStorage.setItem('cp_user',u.name);
+    sessionStorage.setItem('cp_code',u.code);
+    document.getElementById('lockScreen').style.display='none';
+    document.getElementById('logoutBtn').style.display='block';
+    showWhoami();updateAdminUI();
+    logAction('התחבר למערכת');save();
+  } else {
+    document.getElementById('pinErr').style.display='block';
+    document.getElementById('pinInput').value='';
+  }
+}
+function logout(){
+  if(!confirm('להתנתק מהמערכת?'))return;
+  logAction('התנתק');save();
+  sessionStorage.removeItem('cp_user');sessionStorage.removeItem('cp_code');
+  currentUser=null;currentIsAdmin=false;
+  document.getElementById('pinInput').value='';
+  document.getElementById('pinErr').style.display='none';
+  document.getElementById('logoutBtn').style.display='none';
+  document.getElementById('lockScreen').style.display='grid';
+}
+function showWhoami(){
+  const el=document.getElementById('whoami');
+  if(el)el.textContent=currentUser?('מחובר: '+currentUser+(currentIsAdmin?' (מנהל)':'')):'';
+}
+function updateAdminUI(){
+  document.querySelectorAll('.navbtn[data-view="users"]').forEach(b=>b.style.display=currentIsAdmin?'flex':'none');
+}
+
+/* ===== USER MANAGEMENT (admin only) ===== */
+function renderUsers(){
+  if(!currentIsAdmin){document.getElementById('usersTable').innerHTML=emptyMsg('🔒','רק מנהל יכול לנהל משתמשים');return}
+  const rows=(DB.users||[]).map(u=>{
+    const roleTag=u.admin?'<span class="tag purple">מנהל</span>':'<span class="tag blue">עובד</span>';
+    const canDelete=(DB.users.filter(x=>x.admin).length>1)||!u.admin; // אל תמחק את המנהל האחרון
+    return `<tr><td><b>${u.name}</b></td><td><span class="tag green">קוד: ${u.code}</span></td><td>${roleTag}</td><td>${canDelete?`<button class="btn sm danger" onclick="delUser('${u.code}')">מחיקה</button>`:'<small style="color:var(--muted)">מנהל אחרון</small>'}</td></tr>`;
+  }).join('');
+  document.getElementById('usersTable').innerHTML=`<table><thead><tr><th>שם</th><th>קוד גישה</th><th>הרשאה</th><th>פעולות</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function openUser(){
+  if(!currentIsAdmin){toast('רק מנהל יכול להוסיף משתמשים');return}
+  document.getElementById('u_name').value='';document.getElementById('u_code').value='';document.getElementById('u_admin').checked=false;
+  show('userModal');
+}
+function saveUser(){
+  const name=document.getElementById('u_name').value.trim();
+  const code=document.getElementById('u_code').value.trim();
+  if(!name){toast('יש למלא שם');return}
+  if(!/^\d{4,8}$/.test(code)){toast('הקוד חייב להיות 4-8 ספרות');return}
+  if(findUser(code)){toast('הקוד הזה כבר תפוס, בחר אחר');return}
+  DB.users.push({name,code,admin:document.getElementById('u_admin').checked});
+  logAction('הוסיף משתמש: '+name);
+  closeModal('userModal');save();renderUsers();toast('המשתמש נוסף ✓');
+}
+function delUser(code){
+  const u=findUser(code);if(!u)return;
+  if(u.admin&&DB.users.filter(x=>x.admin).length<=1){toast('לא ניתן למחוק את המנהל האחרון');return}
+  if(code===sessionStorage.getItem('cp_code')){toast('אי אפשר למחוק את המשתמש שאיתו אתה מחובר');return}
+  if(!confirm('למחוק את המשתמש "'+u.name+'"?'))return;
+  DB.users=DB.users.filter(x=>x.code!==code);
+  logAction('מחק משתמש: '+u.name);
+  save();renderUsers();toast('המשתמש נמחק');
+}
+
+function notifyStore(oid){
+  const o=DB.orders.find(x=>x.id===oid);if(!o)return;
+  const s=storeById(o.storeId);if(!s){toast('לא נמצאה חנות');return}
+  const phone=(s.phone||'').replace(/[^0-9]/g,'').replace(/^0/,'972');
+  if(!phone){toast('אין טלפון לחנות');return}
+  const msg=encodeURIComponent(`שלום ${s.name}, ההזמנה שלכם (${o.product}${o.qty>1?' ×'+o.qty:''}) מ-Cashphone מוכנה! סכום: ${fmt(o.amount)}. תודה 🙏`);
+  window.open(`https://wa.me/${phone}?text=${msg}`,'_blank');
+}
+
+function closeModal(i){document.getElementById(i).classList.remove('show')}
+document.querySelectorAll('.modal-bg').forEach(m=>m.onclick=e=>{if(e.target===m)m.classList.remove('show')});
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200)}
+
+/* ===== PWA install ===== */
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;document.getElementById('installBar').classList.add('show')});
+function installApp(){if(deferredPrompt){deferredPrompt.prompt();deferredPrompt.userChoice.then(()=>{deferredPrompt=null;document.getElementById('installBar').classList.remove('show')})}}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('sw.js').catch(()=>{})})}
+
+/* ===== DOCUMENTS + AI SCAN + SIGNATURE ===== */
+const SCAN_PROMPT=`אתה מנתח מסמכי מלאי: חשבוניות, תעודות משלוח, רשימות אריזה (עברית/אנגלית/סינית).
+חלץ את שם הספק ואת כל שורות המוצרים. החזר אך ורק JSON תקין, בלי טקסט מסביב, בלי markdown:
+{"supplier": string|null, "items": [{"name": string, "quantity": number, "price": number|null}]}
+price = מחיר עלות ליחידה אם מופיע. אם אין מוצרים החזר items ריק.`;
+let scanData=null, viewDocId=null;
+
+function aiKey(){return localStorage.getItem('cp_aikey')||''}
+function openAiKey(){document.getElementById('ak_input').value=aiKey();show('aiKeyModal')}
+function saveAiKey(){localStorage.setItem('cp_aikey',document.getElementById('ak_input').value.trim());closeModal('aiKeyModal');toast('נשמר במכשיר זה ✓')}
+function escAttr(s){return (s||'').toString().replace(/"/g,'&quot;')}
+function fileToDataURL(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f)})}
+function resizeImg(dataUrl,maxW,q){return new Promise(res=>{const im=new Image();im.onload=()=>{const s=Math.min(1,maxW/im.width);const c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q))};im.src=dataUrl})}
+
+async function aiExtract(imgB64){
+  // 1) פרוקסי מאובטח (Netlify Function) — המפתח מוסתר בשרת
+  try{const r=await fetch('/.netlify/functions/scan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({image:imgB64,media_type:'image/jpeg',prompt:SCAN_PROMPT})});if(r.ok){const d=await r.json();if(d&&d.text)return d.text}}catch(e){}
+  // 2) גיבוי: מפתח מקומי בדפדפן
+  const key=aiKey();
+  if(key){try{const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:imgB64}},{type:'text',text:SCAN_PROMPT}]}]})});const data=await resp.json();return (data.content||[]).map(c=>c.type==='text'?c.text:'').join('')}catch(e){}}
+  return null;
+}
+async function handleScanFile(file,input){
+  if(input)input.value='';
+  if(!file)return;
+  let img;try{const raw=await fileToDataURL(file);img=await resizeImg(raw,1500,0.72)}catch(e){toast('בעיה בקריאת הקובץ');return}
+  const st=document.getElementById('scanStatus');st.style.display='block';st.textContent='⏳ מזהה מוצרים מהמסמך...';
+  const t=await aiExtract(img.split(',')[1]);
+  st.style.display='none';
+  if(!t){await createDocument({title:'מסמך '+new Date().toLocaleDateString('he-IL'),cat:'מסמך',storeId:'',dataUrl:img});toast('נשמר כמסמך (זיהוי AI לא פעיל)');return}
+  try{
+    const parsed=JSON.parse(t.replace(/```json|```/g,'').trim());
+    const items=(Array.isArray(parsed)?parsed:parsed.items||[]).filter(i=>i&&i.name).map(i=>({name:String(i.name).trim(),qty:+i.quantity>0?+i.quantity:1,cost:i.price!=null&&!isNaN(+i.price)?+i.price:'',keep:true}));
+    if(!items.length){await createDocument({title:'מסמך '+new Date().toLocaleDateString('he-IL'),cat:'מסמך',storeId:'',dataUrl:img});toast('לא זוהו מוצרים — נשמר כמסמך');return}
+    scanData={items,supplier:parsed.supplier||'',img};renderScanReview();show('scanModal');
+  }catch(e){await createDocument({title:'מסמך '+new Date().toLocaleDateString('he-IL'),cat:'מסמך',storeId:'',dataUrl:img});toast('הזיהוי נכשל — נשמר כמסמך')}
+}
+function scSet(i,f,v){if(scanData&&scanData.items[i])scanData.items[i][f]=v}
+function scToggle(i,el){if(scanData){scanData.items[i].keep=el.checked;el.closest('.scanrow').classList.toggle('off',!el.checked)}}
+function renderScanReview(){
+  document.getElementById('scanSupplier').value=scanData.supplier||'';
+  document.getElementById('scanRows').innerHTML=scanData.items.map((it,i)=>`<div class="scanrow ${it.keep?'':'off'}">
+    <input type="checkbox" ${it.keep?'checked':''} onchange="scToggle(${i},this)">
+    <input class="in" value="${escAttr(it.name)}" onchange="scSet(${i},'name',this.value)">
+    <input class="in num" type="number" value="${it.qty}" onchange="scSet(${i},'qty',+this.value)" placeholder="כמות">
+    <input class="in num" type="number" value="${it.cost}" onchange="scSet(${i},'cost',this.value===''?'':+this.value)" placeholder="עלות">
+  </div>`).join('');
+}
+async function confirmScan(){
+  const supplier=document.getElementById('scanSupplier').value.trim();
+  const keep=scanData.items.filter(i=>i.keep&&i.name.trim());
+  keep.forEach(it=>{const cost=it.cost===''?0:+it.cost;const ex=DB.products.find(p=>p.biz==='bnaya'&&p.name.trim().toLowerCase()===it.name.trim().toLowerCase());
+    if(ex){ex.stock=(ex.stock||0)+it.qty;if(cost)ex.cost=cost;if(supplier)ex.supplier=supplier}
+    else DB.products.push({id:id(),name:it.name.trim(),biz:'bnaya',price:cost?Math.round(cost*1.4):0,cost:cost,stock:it.qty,min:5,supplier:supplier,...(testMode()?{demo:true}:{})})});
+  logAction('קלט '+keep.length+' מוצרים מסריקת מסמך');
+  const saveDoc=document.getElementById('scanSaveDoc').checked;const img=scanData.img;
+  closeModal('scanModal');save();toast('נקלטו '+keep.length+' מוצרים ✓');
+  if(saveDoc&&img)await createDocument({title:(supplier?supplier+' - ':'')+'מסמך '+new Date().toLocaleDateString('he-IL'),cat:'חשבונית',storeId:'',dataUrl:img});
+  scanData=null;
+}
+async function createDocument({title,cat,storeId,dataUrl}){
+  const docId=id();const rec={id:docId,title,cat,storeId:(storeId||docStoreFilter||''),date:Date.now(),signed:false,url:'',path:''};if(testMode())rec.demo=true;
+  if(window.FB&&window.FB.ready&&window.FB.uploadImage){try{const path='docs/'+docId+'.jpg';rec.url=await window.FB.uploadImage(path,dataUrl);rec.path=path}catch(e){rec.url='local:'+docId;try{localStorage.setItem('cp_docimg_'+docId,dataUrl)}catch(_){}toast('שים לב: אחסון הענן נכשל — ראה מדריך Storage')}}
+  else {rec.url='local:'+docId;try{localStorage.setItem('cp_docimg_'+docId,dataUrl)}catch(_){}}
+  if(!DB.documents)DB.documents=[];DB.documents.unshift(rec);logAction('הוסיף מסמך: '+title);save();renderDocs();
+}
+function docSrc(d){return d&&d.url&&d.url.indexOf('local:')===0?(localStorage.getItem('cp_docimg_'+d.id)||''):(d?d.url:'')}
+let docStoreFilter='';
+function openStoreDocs(sid){docStoreFilter=sid||'';document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.navbtn[data-view="docs"]').forEach(x=>x.classList.add('on'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('view-docs').classList.add('on');document.getElementById('side').classList.remove('open');renderDocs()}
+function clearDocFilter(){docStoreFilter='';renderDocs()}
+function renderDocs(){
+  if(!DB.documents)DB.documents=[];const g=document.getElementById('docsGrid');if(!g)return;
+  const fb=document.getElementById('docFilterBar');let list=DB.documents;
+  if(docStoreFilter){const s=storeById(docStoreFilter);list=list.filter(d=>d.storeId===docStoreFilter);if(fb){fb.style.display='flex';fb.innerHTML=`<span>מסמכים של <b>${s?s.name:'—'}</b> · מסמכים חדשים יקושרו אליה</span><button class="btn sm ghost" onclick="clearDocFilter()">הצג הכל</button>`}}
+  else if(fb){fb.style.display='none'}
+  if(!list.length){g.innerHTML=emptyMsg('🗂️',docStoreFilter?'אין מסמכים לחנות זו':'אין מסמכים עדיין. צלם חשבונית או העלה תמונה.');return}
+  g.innerHTML=list.map(d=>{const s=storeById(d.storeId);return `<div class="doccard" onclick="openDocView('${d.id}')"><div class="docimg"><img src="${docSrc(d)}" loading="lazy">${d.signed?'<span class="sigbadge">✍️ חתום</span>':''}</div><div class="docmeta"><div class="t">${d.title}</div><div class="s">${new Date(d.date).toLocaleDateString('he-IL')}${s?' · '+s.name:''}</div></div></div>`}).join('');
+}
+function openDocView(did){viewDocId=did;const d=DB.documents.find(x=>x.id===did);if(!d)return;
+  document.getElementById('dvTitle').textContent=d.title;document.getElementById('dvImg').src=docSrc(d);
+  const sig=document.getElementById('dvSig');if(d.signed&&d.sigUrl){sig.src=d.sigUrl;sig.style.display='block'}else sig.style.display='none';
+  document.getElementById('dvStore').innerHTML='<option value="">— ללא שיוך לחנות —</option>'+DB.stores.map(s=>`<option value="${s.id}" ${s.id===d.storeId?'selected':''}>${s.name}</option>`).join('');
+  document.getElementById('dvSignBtn').textContent=d.signed?'✍️ חתום מחדש':'✍️ חתום על המסמך';show('docViewModal');
+}
+function dvStoreChange(){const d=DB.documents.find(x=>x.id===viewDocId);if(d){d.storeId=document.getElementById('dvStore').value;save()}}
+async function delDocCurrent(){const d=DB.documents.find(x=>x.id===viewDocId);if(!d)return;if(!confirm('למחוק מסמך?'))return;if(d.path&&window.FB&&window.FB.deleteImage)await window.FB.deleteImage(d.path);if(d.sigPath&&window.FB&&window.FB.deleteImage)await window.FB.deleteImage(d.sigPath);DB.documents=DB.documents.filter(x=>x.id!==viewDocId);logAction('מחק מסמך');closeModal('docViewModal');save();renderDocs();toast('נמחק')}
+
+let sigCtx=null,sigDrawing=false,sigHas=false;
+function openSign(){const c=document.getElementById('sigCanvas');const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);ctx.lineWidth=2.6;ctx.lineCap='round';ctx.strokeStyle='#0f172a';sigCtx=ctx;sigHas=false;show('signModal')}
+function sigPos(e){const c=document.getElementById('sigCanvas');const r=c.getBoundingClientRect();const p=e.touches?e.touches[0]:e;return{x:(p.clientX-r.left)*(c.width/r.width),y:(p.clientY-r.top)*(c.height/r.height)}}
+function sigStart(e){e.preventDefault();sigDrawing=true;const{x,y}=sigPos(e);sigCtx.beginPath();sigCtx.moveTo(x,y)}
+function sigMove(e){if(!sigDrawing)return;e.preventDefault();const{x,y}=sigPos(e);sigCtx.lineTo(x,y);sigCtx.stroke();sigHas=true}
+function sigEnd(){sigDrawing=false}
+function sigClear(){const c=document.getElementById('sigCanvas');if(sigCtx)sigCtx.clearRect(0,0,c.width,c.height);sigHas=false}
+(function bindSig(){const c=document.getElementById('sigCanvas');if(!c)return;c.addEventListener('mousedown',sigStart);c.addEventListener('mousemove',sigMove);window.addEventListener('mouseup',sigEnd);c.addEventListener('touchstart',sigStart,{passive:false});c.addEventListener('touchmove',sigMove,{passive:false});c.addEventListener('touchend',sigEnd)})();
+async function sigSave(){
+  if(!sigHas){toast('אין חתימה');return}
+  const d=DB.documents.find(x=>x.id===viewDocId);if(!d)return;
+  const sigUrl=document.getElementById('sigCanvas').toDataURL('image/png');closeModal('signModal');
+  let stored=sigUrl,path='';
+  if(window.FB&&window.FB.ready&&window.FB.uploadImage){try{path='sigs/'+d.id+'.png';stored=await window.FB.uploadImage(path,sigUrl)}catch(e){}}
+  d.signed=true;d.sigUrl=stored;d.sigPath=path;logAction('חתם על מסמך: '+d.title);save();renderDocs();
+  const sig=document.getElementById('dvSig');sig.src=stored;sig.style.display='block';document.getElementById('dvSignBtn').textContent='✍️ חתום מחדש';toast('נחתם ✓');
+}
+
+function exportDocPdf(){
+  const d=DB.documents.find(x=>x.id===viewDocId);if(!d)return;
+  const img=document.getElementById('prImg'),sig=document.getElementById('prSig');
+  if(d.signed&&d.sigUrl){sig.src=d.sigUrl;sig.style.display='block'}else sig.style.display='none';
+  const prevTitle=document.title;
+  const go=()=>{document.title=(d.title||'מסמך');setTimeout(()=>{window.print();document.title=prevTitle},100)};
+  img.onload=go;img.onerror=go;img.src=docSrc(d);
+  if(img.complete&&img.naturalWidth)go();
+}
+load();checkLock();renderAll();
+</script>
+</body>
+</html>
