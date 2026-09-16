@@ -222,12 +222,12 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bot
 
     <section class="view" id="view-docs">
       <div class="head"><div><h1>מסמכים וסריקה</h1><p>צלם חשבונית → כניסה אוטומטית למלאי · שמירה · חתימה</p></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost mobtog" onclick="tg()">☰</button><button class="btn ghost" onclick="openAiKey()">⚙️ AI</button><button class="btn ghost" onclick="document.getElementById('docGal').click()">⬆️ העלה</button><button class="btn primary" onclick="document.getElementById('docCam').click()">📸 סרוק מסמך</button></div></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost mobtog" onclick="tg()">☰</button><button class="btn ghost" onclick="openAiKey()">⚙️ AI</button><button class="btn ghost" onclick="document.getElementById('docGal').click()">⬆️ העלה קובץ</button><button class="btn primary" onclick="document.getElementById('docCam').click()">📸 סרוק מסמך</button></div></div>
       <div id="docFilterBar" style="display:none;align-items:center;justify-content:space-between;gap:10px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:13px"></div>
       <div id="scanStatus" class="card" style="display:none;margin-bottom:14px;text-align:center"></div>
       <div class="panel"><div class="ph"><h3>מסמכים שמורים</h3></div><div id="docsGrid" class="docsgrid"></div></div>
       <input id="docCam" type="file" accept="image/*" capture="environment" style="display:none" onchange="handleScanFile(this.files[0],this)">
-      <input id="docGal" type="file" accept="image/*" style="display:none" onchange="handleScanFile(this.files[0],this)">
+      <input id="docGal" type="file" accept="image/*,application/pdf" style="display:none" onchange="handleScanFile(this.files[0],this)">
     </section>
 
     <section class="view" id="view-users">
@@ -242,6 +242,7 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bot
   <h2>הזמנה חדשה</h2><p class="sub">בחרי מוצר וחנות. במלאי פיזי הכמות תרד אוטומטית.</p>
   <div class="field"><label>חנות</label><select id="o_store"></select></div>
   <div class="field"><label>מוצר</label><select id="o_product" onchange="onProdPick()"></select></div>
+  <div style="display:flex;gap:8px;margin-bottom:12px"><button type="button" class="btn ghost" style="flex:1;justify-content:center" onclick="scanOrderBarcode()">📷 סרוק ברקוד</button><button type="button" class="btn ghost" style="flex:1;justify-content:center" onclick="repeatLast()">🔁 חזור על האחרונה</button></div>
   <div class="row2">
     <div class="field"><label>כמות</label><input id="o_qty" type="number" value="1" min="1" oninput="calcTotal()"></div>
     <div class="field"><label>מחיר ליחידה (₪)</label><input id="o_price" type="number" oninput="calcTotal()"></div>
@@ -262,6 +263,7 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bot
     <div class="field"><label>מחיר עלות (₪)</label><input id="p_cost" type="number" placeholder="0" oninput="calcMargin()"></div>
     <div class="field"><label>ספק</label><input id="p_supplier" placeholder="שם הספק"></div>
   </div>
+  <div class="field"><label>ברקוד (EAN/UPC)</label><div style="display:flex;gap:8px"><input id="p_barcode" placeholder="סרוק או הקלד" style="flex:1"><button type="button" class="btn ghost" onclick="startBarcode(c=>{document.getElementById('p_barcode').value=c;toast('ברקוד נקלט ✓')})">📷</button></div></div>
   <div class="field" id="marginBox" style="background:rgba(0,229,160,.08);border:1px solid var(--line);border-radius:10px;padding:10px 13px;font-size:13px;color:var(--accent);font-weight:600;display:none"></div>
   <div class="row2" id="stockRow">
     <div class="field"><label>כמות במלאי</label><input id="p_stock" type="number" value="0"></div>
@@ -335,6 +337,12 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bot
   <div class="field"><label>מפתח API</label><input id="ak_input" placeholder="sk-ant-..." type="password"></div>
   <p class="sub" style="font-size:11px">אם הגדרת פרוקסי (Netlify Function) עם המפתח בשרת — המערכת תשתמש בו אוטומטית והמפתח לא נחשף. שדה זה הוא גיבוי בלבד, לשימוש בלי פרוקסי.</p>
   <div class="modal-foot"><button class="btn ghost" onclick="closeModal('aiKeyModal')">ביטול</button><button class="btn primary" onclick="saveAiKey()">שמור</button></div>
+</div></div>
+
+<div class="modal-bg" id="barcodeModal"><div class="modal">
+  <h2>סריקת ברקוד</h2><p class="sub">כוון את המצלמה לברקוד המוצר</p>
+  <video id="bcVideo" playsinline muted style="width:100%;border-radius:12px;background:#000;aspect-ratio:4/3;object-fit:cover"></video>
+  <div class="modal-foot"><button class="btn ghost" onclick="closeBarcode()">ביטול</button><button class="btn ghost" onclick="manualBarcode()">⌨️ הקלד ידנית</button></div>
 </div></div>
 
 <div id="printArea"><img id="prImg"><img id="prSig" style="display:none"></div>
@@ -623,6 +631,24 @@ function renderDebts(){
   document.getElementById('debtsTable').innerHTML=`<table><thead><tr><th>חנות</th><th>מצב</th><th>גיל חוב</th><th>פעולות</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
+/* ===== BARCODE + QUICK SALE ===== */
+let barcodeCb=null,barcodeStream=null,barcodeRAF=null,barcodeDetector=null;
+async function startBarcode(cb){
+  barcodeCb=cb;
+  if(barcodeStream){barcodeStream.getTracks().forEach(t=>t.stop());barcodeStream=null}
+  if(!('BarcodeDetector' in window)){const c=prompt('סריקה לא נתמכת בדפדפן זה — הקלד ברקוד ידנית:');if(c)cb(c.trim());return}
+  try{barcodeDetector=new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e','code_128','code_39','itf','codabar']})}catch(e){try{barcodeDetector=new BarcodeDetector()}catch(e2){const c=prompt('הקלד ברקוד ידנית:');if(c)cb(c.trim());return}}
+  show('barcodeModal');
+  try{barcodeStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}})}catch(e){closeBarcode();const c=prompt('אין גישה למצלמה — הקלד ברקוד ידנית:');if(c)cb(c.trim());return}
+  const v=document.getElementById('bcVideo');v.srcObject=barcodeStream;try{await v.play()}catch(e){}
+  const tick=async()=>{if(!barcodeStream)return;try{const codes=await barcodeDetector.detect(v);if(codes&&codes.length){const val=codes[0].rawValue;const cb2=barcodeCb;closeBarcode();cb2&&cb2(val);return}}catch(e){}barcodeRAF=requestAnimationFrame(tick)};
+  barcodeRAF=requestAnimationFrame(tick);
+}
+function closeBarcode(){if(barcodeRAF){cancelAnimationFrame(barcodeRAF);barcodeRAF=null}if(barcodeStream){barcodeStream.getTracks().forEach(t=>t.stop());barcodeStream=null}closeModal('barcodeModal')}
+function manualBarcode(){const c=prompt('הקלד ברקוד:');if(c){const cb=barcodeCb;closeBarcode();cb&&cb(c.trim())}}
+function scanOrderBarcode(){startBarcode(code=>{const n=code.replace(/\s/g,'');const p=DB.products.find(x=>(x.barcode||'').replace(/\s/g,'')===n&&n);if(p){document.getElementById('o_product').value=p.id;onProdPick();toast('נבחר: '+p.name)}else toast('לא נמצא מוצר עם ברקוד '+code)})}
+function repeatLast(){const sid=document.getElementById('o_store').value;if(!sid){toast('בחר חנות קודם');return}const last=[...DB.orders].filter(o=>o.storeId===sid).sort((a,b)=>b.date-a.date)[0];if(!last){toast('אין הזמנה קודמת לחנות זו');return}const p=prodById(last.prodId);if(!p){toast('המוצר מההזמנה הקודמת כבר לא קיים');return}document.getElementById('o_product').value=p.id;document.getElementById('o_qty').value=last.qty;onProdPick();document.getElementById('o_price').value=(last.qty?last.amount/last.qty:p.price)||p.price;calcTotal();toast('מולא לפי ההזמנה האחרונה ✓')}
+
 function openOrder(){
   document.getElementById('o_store').innerHTML=DB.stores.map(s=>`<option value="${s.id}">${s.name} (${s.type==='credit'?'אשראי':'יתרה '+fmt(s.balance)})</option>`).join('');
   document.getElementById('o_product').innerHTML=DB.products.map(p=>{const out=p.stock!==null&&p.stock<=0?' [אזל]':'';return `<option value="${p.id}">${p.name}${out}</option>`}).join('');
@@ -657,9 +683,9 @@ function delOrder(oid){if(!confirm('למחוק הזמנה?'))return;const o=DB.o
 
 function openProduct(pid){
   editProdId=pid||null;document.getElementById('prodTitle').textContent=pid?'עריכת מוצר':'מוצר חדש';
-  const p=pid?prodById(pid):{name:'',biz:'cash',price:0,cost:0,stock:0,min:5,supplier:''};
+  const p=pid?prodById(pid):{name:'',biz:'cash',price:0,cost:0,stock:0,min:5,supplier:'',barcode:''};
   document.getElementById('p_name').value=p.name;document.getElementById('p_biz').value=p.biz;document.getElementById('p_price').value=p.price;
-  document.getElementById('p_cost').value=p.cost||0;document.getElementById('p_supplier').value=p.supplier||'';
+  document.getElementById('p_cost').value=p.cost||0;document.getElementById('p_supplier').value=p.supplier||'';document.getElementById('p_barcode').value=p.barcode||'';
   document.getElementById('p_stock').value=p.stock===null?0:p.stock;document.getElementById('p_min').value=p.min||5;
   toggleStock();calcMargin();show('productModal');
 }
@@ -675,7 +701,7 @@ function toggleStock(){document.getElementById('stockRow').style.display=documen
 function saveProduct(){
   const name=document.getElementById('p_name').value.trim();if(!name){toast('יש למלא שם');return}
   const biz=document.getElementById('p_biz').value;
-  const data={name,biz,price:+document.getElementById('p_price').value||0,cost:+document.getElementById('p_cost').value||0,supplier:document.getElementById('p_supplier').value.trim(),stock:biz==='bnaya'?(+document.getElementById('p_stock').value||0):null,min:+document.getElementById('p_min').value||0};
+  const data={name,biz,price:+document.getElementById('p_price').value||0,cost:+document.getElementById('p_cost').value||0,supplier:document.getElementById('p_supplier').value.trim(),barcode:document.getElementById('p_barcode').value.trim(),stock:biz==='bnaya'?(+document.getElementById('p_stock').value||0):null,min:+document.getElementById('p_min').value||0};
   if(editProdId){Object.assign(prodById(editProdId),data);logAction('עדכן מוצר: '+name)}else{DB.products.push({id:id(),...data,...(testMode()?{demo:true}:{})});logAction('הוסיף מוצר: '+name)}
   closeModal('productModal');save();toast('המוצר נשמר ✓');
 }
@@ -776,8 +802,9 @@ function buildRoute(){
     const waMsg=encodeURIComponent(`שלום, מ-Cashphone. אני בדרך אליכם. מיקום: https://maps.google.com/?q=${destParam}`);
     const phone=(s.phone||'').replace(/[^0-9]/g,'').replace(/^0/,'972');
     const wa=phone?`https://wa.me/${phone}?text=${waMsg}`:null;
-    const balTag=s.balance<0?`<span class="tag red">חוב ${fmt(Math.abs(s.balance))}</span>`:s.balance>0?`<span class="tag green">${fmt(s.balance)}</span>`:'<span class="tag blue">מאופס</span>';
-    return `<tr>
+    const isDebt=s.balance<0;const info=isDebt?debtInfo(s):null;
+    const balTag=isDebt?`<span class="tag red">חוב ${fmt(Math.abs(s.balance))}</span>${info&&info.days>0?` <span class="tag ${ageCls(info.days)}">${info.days} ימים</span>`:''}`:s.balance>0?`<span class="tag green">${fmt(s.balance)}</span>`:'<span class="tag blue">מאופס</span>';
+    return `<tr style="${isDebt?'box-shadow:inset 3px 0 0 var(--danger)':''}">
       <td style="width:42px"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#06121f;display:grid;place-items:center;font-weight:800">${i+1}</div></td>
       <td><b>${s.name}</b><br><small style="color:var(--muted)">${s.addr}</small></td>
       <td>${balTag}</td>
@@ -785,9 +812,12 @@ function buildRoute(){
         <a href="${navWaze}" target="_blank" class="btn sm primary" style="text-decoration:none;background:linear-gradient(135deg,#33ccff,#0a8ed9);color:#fff">Waze</a>
         <a href="${navGoogle}" target="_blank" class="btn sm ghost" style="text-decoration:none">Maps</a>
         ${wa?`<a href="${wa}" target="_blank" class="btn sm ghost" style="text-decoration:none">📲</a>`:''}
+        ${isDebt?`<button class="btn sm ghost" onclick="remindDebt('${s.id}')" style="border-color:rgba(244,63,94,.4);color:var(--danger)">💰 תזכורת</button> <button class="btn sm primary" onclick="openDeposit('${s.id}')">גבייה</button>`:''}
       </td></tr>`;
   }).join('');
-  document.getElementById('routeTable').innerHTML=`<table><tbody>${rows}</tbody></table>`;
+  const _dOnRoute=list.filter(s=>s.balance<0);const _toCollect=_dOnRoute.reduce((a,s)=>a+Math.abs(s.balance),0);
+  const _summary=_dOnRoute.length?`<div style="background:rgba(244,63,94,.1);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:14px">💰 בסבב הזה: <b>${_dOnRoute.length}</b> חנויות לגבייה · סה"כ <b>${fmt(_toCollect)}</b></div>`:'';
+  document.getElementById('routeTable').innerHTML=_summary+`<table><tbody>${rows}</tbody></table>`;
   window._routeStops=list.map(s=>{const c=storeCoords(s);return c?`${c.lat},${c.lng}`:s.addr});
   document.getElementById('openAllBtn').style.display=list.length?'inline-flex':'none';
 }
@@ -984,11 +1014,36 @@ async function aiExtract(imgB64){
   if(key){try{const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:imgB64}},{type:'text',text:SCAN_PROMPT}]}]})});const data=await resp.json();return (data.content||[]).map(c=>c.type==='text'?c.text:'').join('')}catch(e){}}
   return null;
 }
+async function ensurePdfLib(){
+  if(window.pdfjsLib)return;
+  await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s)});
+  if(window.pdfjsLib)pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+async function pdfToImage(file){
+  const buf=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:buf}).promise;
+  const pages=Math.min(pdf.numPages,3);
+  const canvases=[];let totalH=0,maxW=0;
+  for(let i=1;i<=pages;i++){
+    const page=await pdf.getPage(i);const vp=page.getViewport({scale:1.6});
+    const c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;
+    await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+    canvases.push(c);totalH+=c.height;maxW=Math.max(maxW,c.width);
+  }
+  const out=document.createElement('canvas');out.width=maxW;out.height=totalH;
+  const ctx=out.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,maxW,totalH);
+  let y=0;canvases.forEach(c=>{ctx.drawImage(c,0,y);y+=c.height});
+  return await resizeImg(out.toDataURL('image/jpeg',0.85),1500,0.72);
+}
 async function handleScanFile(file,input){
   if(input)input.value='';
   if(!file)return;
-  let img;try{const raw=await fileToDataURL(file);img=await resizeImg(raw,1500,0.72)}catch(e){toast('בעיה בקריאת הקובץ');return}
-  const st=document.getElementById('scanStatus');st.style.display='block';st.textContent='⏳ מזהה מוצרים מהמסמך...';
+  const st=document.getElementById('scanStatus');let img;
+  try{
+    if(file.type==='application/pdf'||/\.pdf$/i.test(file.name||'')){st.style.display='block';st.textContent='⏳ מעבד PDF...';await ensurePdfLib();img=await pdfToImage(file)}
+    else{const raw=await fileToDataURL(file);img=await resizeImg(raw,1500,0.72)}
+  }catch(e){st.style.display='none';toast('בעיה בעיבוד הקובץ');return}
+  st.style.display='block';st.textContent='⏳ מזהה מוצרים מהמסמך...';
   const t=await aiExtract(img.split(',')[1]);
   st.style.display='none';
   if(!t){await createDocument({title:'מסמך '+new Date().toLocaleDateString('he-IL'),cat:'מסמך',storeId:'',dataUrl:img});toast('נשמר כמסמך (זיהוי AI לא פעיל)');return}
