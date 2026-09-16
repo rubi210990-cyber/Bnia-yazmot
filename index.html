@@ -216,7 +216,7 @@ label{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bot
 
     <section class="view" id="view-history">
       <div class="head"><div><h1>היסטוריית פעולות</h1><p>תיעוד כל הפעולות במערכת</p></div>
-        <button class="btn ghost mobtog" onclick="tg()">☰</button></div>
+        <div style="display:flex;gap:8px"><button class="btn ghost mobtog" onclick="tg()">☰</button><button class="btn ghost" onclick="clearHistory()">🗑️ נקה יומן</button></div></div>
       <div class="panel"><div class="ph"><h3>יומן פעילות</h3></div><div id="historyTable"></div></div>
     </section>
 
@@ -385,7 +385,7 @@ const FB_PASSWORD = "220892!";
 if (firebaseConfig.apiKey) {
   try {
     const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
-    const { getFirestore, doc, setDoc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+    const { getFirestore, doc, setDoc, getDoc, deleteDoc, onSnapshot } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
     const { getAuth, signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -399,6 +399,9 @@ if (firebaseConfig.apiKey) {
     const ref = doc(db, "cashphone", "data");
     window.FB.save = async (data) => { try { await setDoc(ref, { json: JSON.stringify(data), at: Date.now() }); } catch(e){ console.error(e); } };
     window.FB.listen = (cb) => onSnapshot(ref, (snap) => { if (snap.exists() && snap.data().json) cb(JSON.parse(snap.data().json)); });
+    window.FB.saveImage = async (id, dataUrl) => { await setDoc(doc(db, "docimages", id), { data: dataUrl, at: Date.now() }); };
+    window.FB.getImage = async (id) => { const s = await getDoc(doc(db, "docimages", id)); return s.exists() ? (s.data().data || null) : null; };
+    window.FB.deleteImageDoc = async (id) => { try { await deleteDoc(doc(db, "docimages", id)); } catch(e){} };
     window.FB.ready = true;
     document.dispatchEvent(new Event("fb-ready"));
     // Storage — best effort בלבד, לעולם לא חוסם את הסנכרון של Firestore
@@ -512,7 +515,7 @@ async function purgeDemo(){
   if(!confirm('למחוק '+n+' פריטי בדיקה? הנתונים האמיתיים יישארו.'))return;
   const demoStoreIds=new Set(DB.stores.filter(s=>s.demo).map(s=>s.id));
   const demoDocs=(DB.documents||[]).filter(d=>d.demo||demoStoreIds.has(d.storeId));
-  for(const d of demoDocs){if(d.path&&window.FB&&window.FB.deleteImage)await window.FB.deleteImage(d.path);if(d.sigPath&&window.FB&&window.FB.deleteImage)await window.FB.deleteImage(d.sigPath)}
+  for(const d of demoDocs){if(window.FB&&window.FB.deleteImageDoc){await window.FB.deleteImageDoc(d.id);await window.FB.deleteImageDoc('sig_'+d.id)}try{localStorage.removeItem('cp_docimg_'+d.id);localStorage.removeItem('cp_docimg_sig_'+d.id)}catch(_){}delete imgCache[d.id];delete imgCache['sig_'+d.id]}
   DB.documents=(DB.documents||[]).filter(d=>!(d.demo||demoStoreIds.has(d.storeId)));
   DB.products=DB.products.filter(p=>!p.demo);
   DB.orders=DB.orders.filter(o=>!(o.demo||demoStoreIds.has(o.storeId)));
@@ -869,6 +872,12 @@ function renderReports(){
 }
 
 /* ===== HISTORY ===== */
+function clearHistory(){
+  if(!currentIsAdmin){toast('רק מנהל יכול לנקות את היומן');return}
+  if(!DB.log||!DB.log.length){toast('היומן ריק');return}
+  if(!confirm('לנקות את כל היומן? ('+DB.log.length+' רשומות)\nפעולה זו אינה הפיכה.'))return;
+  DB.log=[];save();renderHistory();toast('היומן נוקה ✓');
+}
 function renderHistory(){
   if(!DB.log||!DB.log.length){document.getElementById('historyTable').innerHTML=emptyMsg('🕘','אין פעולות מתועדות עדיין');return}
   let rows=DB.log.slice(0,200).map(l=>`<tr><td>${l.txt}</td><td class="hide-m"><span class="tag blue">${l.user}</span></td><td class="hide-m" style="color:var(--muted)">${new Date(l.date).toLocaleString('he-IL')}</td></tr>`).join('');
@@ -1078,12 +1087,17 @@ async function confirmScan(){
   scanData=null;
 }
 async function createDocument({title,cat,storeId,dataUrl}){
-  const docId=id();const rec={id:docId,title,cat,storeId:(storeId||docStoreFilter||''),date:Date.now(),signed:false,url:'',path:''};if(testMode())rec.demo=true;
-  if(window.FB&&window.FB.ready&&window.FB.uploadImage){try{const path='docs/'+docId+'.jpg';rec.url=await window.FB.uploadImage(path,dataUrl);rec.path=path}catch(e){rec.url='local:'+docId;try{localStorage.setItem('cp_docimg_'+docId,dataUrl)}catch(_){}toast('שים לב: אחסון הענן נכשל — ראה מדריך Storage')}}
-  else {rec.url='local:'+docId;try{localStorage.setItem('cp_docimg_'+docId,dataUrl)}catch(_){}}
+  const docId=id();const rec={id:docId,title,cat,storeId:(storeId||docStoreFilter||''),date:Date.now(),signed:false,url:'fs:'+docId};if(testMode())rec.demo=true;
+  const small=await compressForFirestore(dataUrl);
+  imgCache[docId]=small;try{localStorage.setItem('cp_docimg_'+docId,small)}catch(_){}
+  if(window.FB&&window.FB.ready&&window.FB.saveImage){try{await window.FB.saveImage(docId,small)}catch(e){toast('שמירת התמונה לענן נכשלה — נשמרה מקומית')}}
   if(!DB.documents)DB.documents=[];DB.documents.unshift(rec);logAction('הוסיף מסמך: '+title);save();renderDocs();
 }
-function docSrc(d){return d&&d.url&&d.url.indexOf('local:')===0?(localStorage.getItem('cp_docimg_'+d.id)||''):(d?d.url:'')}
+const imgCache={};
+function docSrcSync(d){if(!d)return '';if(d.url&&d.url.indexOf('http')===0)return d.url;if(imgCache[d.id])return imgCache[d.id];try{const l=localStorage.getItem('cp_docimg_'+d.id);if(l)return l}catch(_){}return ''}
+async function loadImg(key){if(imgCache[key])return imgCache[key];try{const l=localStorage.getItem('cp_docimg_'+key);if(l){imgCache[key]=l;return l}}catch(_){}if(window.FB&&window.FB.getImage){try{const dta=await window.FB.getImage(key);if(dta){imgCache[key]=dta;try{localStorage.setItem('cp_docimg_'+key,dta)}catch(_){}return dta}}catch(e){}}return ''}
+function hydrateDocImages(){document.querySelectorAll('img[data-img]').forEach(async img=>{const k=img.getAttribute('data-img');if(img.getAttribute('src'))return;const u=await loadImg(k);if(u)img.src=u})}
+async function compressForFirestore(dataUrl){let q=0.72,w=1400,out=await resizeImg(dataUrl,w,q);while(out.length>680000&&(q>0.42||w>800)){if(q>0.46)q=q-0.1;else w=Math.max(800,w-200);out=await resizeImg(dataUrl,w,q)}return out}
 let docStoreFilter='';
 function openStoreDocs(sid){docStoreFilter=sid||'';document.querySelectorAll('.navbtn').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.navbtn[data-view="docs"]').forEach(x=>x.classList.add('on'));document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('view-docs').classList.add('on');document.getElementById('side').classList.remove('open');renderDocs()}
 function clearDocFilter(){docStoreFilter='';renderDocs()}
@@ -1093,16 +1107,18 @@ function renderDocs(){
   if(docStoreFilter){const s=storeById(docStoreFilter);list=list.filter(d=>d.storeId===docStoreFilter);if(fb){fb.style.display='flex';fb.innerHTML=`<span>מסמכים של <b>${s?s.name:'—'}</b> · מסמכים חדשים יקושרו אליה</span><button class="btn sm ghost" onclick="clearDocFilter()">הצג הכל</button>`}}
   else if(fb){fb.style.display='none'}
   if(!list.length){g.innerHTML=emptyMsg('🗂️',docStoreFilter?'אין מסמכים לחנות זו':'אין מסמכים עדיין. צלם חשבונית או העלה תמונה.');return}
-  g.innerHTML=list.map(d=>{const s=storeById(d.storeId);return `<div class="doccard" onclick="openDocView('${d.id}')"><div class="docimg"><img src="${docSrc(d)}" loading="lazy">${d.signed?'<span class="sigbadge">✍️ חתום</span>':''}</div><div class="docmeta"><div class="t">${d.title}</div><div class="s">${new Date(d.date).toLocaleDateString('he-IL')}${s?' · '+s.name:''}</div></div></div>`}).join('');
+  g.innerHTML=list.map(d=>{const s=storeById(d.storeId);const src=docSrcSync(d);return `<div class="doccard" onclick="openDocView('${d.id}')"><div class="docimg"><img data-img="${d.id}"${src?` src="${src}"`:''} loading="lazy">${d.signed?'<span class="sigbadge">✍️ חתום</span>':''}</div><div class="docmeta"><div class="t">${d.title}</div><div class="s">${new Date(d.date).toLocaleDateString('he-IL')}${s?' · '+s.name:''}</div></div></div>`}).join('');
+  hydrateDocImages();
 }
 function openDocView(did){viewDocId=did;const d=DB.documents.find(x=>x.id===did);if(!d)return;
-  document.getElementById('dvTitle').textContent=d.title;document.getElementById('dvImg').src=docSrc(d);
-  const sig=document.getElementById('dvSig');if(d.signed&&d.sigUrl){sig.src=d.sigUrl;sig.style.display='block'}else sig.style.display='none';
+  document.getElementById('dvTitle').textContent=d.title;
+  const dv=document.getElementById('dvImg');const direct=docSrcSync(d);dv.src=direct||'';if(!direct)loadImg(d.id).then(u=>{if(u)dv.src=u});
+  const sig=document.getElementById('dvSig');if(d.signed){sig.style.display='block';const sd=imgCache['sig_'+d.id]||'';sig.src=sd;if(!sd)loadImg('sig_'+d.id).then(u=>{if(u)sig.src=u})}else sig.style.display='none';
   document.getElementById('dvStore').innerHTML='<option value="">— ללא שיוך לחנות —</option>'+DB.stores.map(s=>`<option value="${s.id}" ${s.id===d.storeId?'selected':''}>${s.name}</option>`).join('');
   document.getElementById('dvSignBtn').textContent=d.signed?'✍️ חתום מחדש':'✍️ חתום על המסמך';show('docViewModal');
 }
 function dvStoreChange(){const d=DB.documents.find(x=>x.id===viewDocId);if(d){d.storeId=document.getElementById('dvStore').value;save()}}
-async function delDocCurrent(){const d=DB.documents.find(x=>x.id===viewDocId);if(!d)return;if(!confirm('למחוק מסמך?'))return;if(d.path&&window.FB&&window.FB.deleteImage)await window.FB.deleteImage(d.path);if(d.sigPath&&window.FB&&window.FB.deleteImage)await window.FB.deleteImage(d.sigPath);DB.documents=DB.documents.filter(x=>x.id!==viewDocId);logAction('מחק מסמך');closeModal('docViewModal');save();renderDocs();toast('נמחק')}
+async function delDocCurrent(){const d=DB.documents.find(x=>x.id===viewDocId);if(!d)return;if(!confirm('למחוק מסמך?'))return;if(window.FB&&window.FB.deleteImageDoc){await window.FB.deleteImageDoc(d.id);await window.FB.deleteImageDoc('sig_'+d.id)}try{localStorage.removeItem('cp_docimg_'+d.id);localStorage.removeItem('cp_docimg_sig_'+d.id)}catch(_){}delete imgCache[d.id];delete imgCache['sig_'+d.id];DB.documents=DB.documents.filter(x=>x.id!==viewDocId);logAction('מחק מסמך');closeModal('docViewModal');save();renderDocs();toast('נמחק')}
 
 let sigCtx=null,sigDrawing=false,sigHas=false;
 function openSign(){const c=document.getElementById('sigCanvas');const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);ctx.lineWidth=2.6;ctx.lineCap='round';ctx.strokeStyle='#0f172a';sigCtx=ctx;sigHas=false;show('signModal')}
@@ -1116,19 +1132,20 @@ async function sigSave(){
   if(!sigHas){toast('אין חתימה');return}
   const d=DB.documents.find(x=>x.id===viewDocId);if(!d)return;
   const sigUrl=document.getElementById('sigCanvas').toDataURL('image/png');closeModal('signModal');
-  let stored=sigUrl,path='';
-  if(window.FB&&window.FB.ready&&window.FB.uploadImage){try{path='sigs/'+d.id+'.png';stored=await window.FB.uploadImage(path,sigUrl)}catch(e){}}
-  d.signed=true;d.sigUrl=stored;d.sigPath=path;logAction('חתם על מסמך: '+d.title);save();renderDocs();
-  const sig=document.getElementById('dvSig');sig.src=stored;sig.style.display='block';document.getElementById('dvSignBtn').textContent='✍️ חתום מחדש';toast('נחתם ✓');
+  imgCache['sig_'+d.id]=sigUrl;try{localStorage.setItem('cp_docimg_sig_'+d.id,sigUrl)}catch(_){}
+  if(window.FB&&window.FB.ready&&window.FB.saveImage){try{await window.FB.saveImage('sig_'+d.id,sigUrl)}catch(e){}}
+  d.signed=true;d.sigUrl='fs:sig_'+d.id;logAction('חתם על מסמך: '+d.title);save();renderDocs();
+  const sig=document.getElementById('dvSig');sig.src=sigUrl;sig.style.display='block';document.getElementById('dvSignBtn').textContent='✍️ חתום מחדש';toast('נחתם ✓');
 }
 
-function exportDocPdf(){
+async function exportDocPdf(){
   const d=DB.documents.find(x=>x.id===viewDocId);if(!d)return;
   const img=document.getElementById('prImg'),sig=document.getElementById('prSig');
-  if(d.signed&&d.sigUrl){sig.src=d.sigUrl;sig.style.display='block'}else sig.style.display='none';
+  if(d.signed){const su=await loadImg('sig_'+d.id);if(su){sig.src=su;sig.style.display='block'}else sig.style.display='none'}else sig.style.display='none';
+  const src=docSrcSync(d)||await loadImg(d.id);
   const prevTitle=document.title;
   const go=()=>{document.title=(d.title||'מסמך');setTimeout(()=>{window.print();document.title=prevTitle},100)};
-  img.onload=go;img.onerror=go;img.src=docSrc(d);
+  img.onload=go;img.onerror=go;img.src=src;
   if(img.complete&&img.naturalWidth)go();
 }
 load();checkLock();renderAll();
